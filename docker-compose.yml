@@ -1,0 +1,79 @@
+# CommitteeFlow — full stack (spec §29).
+#
+#   cp .env.example .env      # then edit the secrets
+#   docker compose up -d --build
+#   docker compose run --rm committee-app npm run migrate:up --workspace server
+#   docker compose run --rm committee-app npm run seed --workspace server
+#
+# PostgreSQL is deliberately NOT published to the company network (spec §64);
+# it is reachable only over the private compose network.
+
+name: committeeflow
+
+services:
+  committee-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: committeeflow:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      # Inside the compose network the database host is the service name.
+      DATABASE_URL: postgres://${POSTGRES_USER:-committeeflow}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-committeeflow}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      SESSION_NAME: ${SESSION_NAME:-committeeflow.sid}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
+      # Set COOKIE_SECURE=true once TLS terminates in front of this service.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:4000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-CommitteeFlow <committeeflow@example.com>}
+      OUTBOX_WORKER_ENABLED: ${OUTBOX_WORKER_ENABLED:-true}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Plan Administrator}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@committeeflow.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    ports:
+      - "${APP_PORT:-4000}:4000"
+    networks:
+      - committeeflow
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-committeeflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-committeeflow}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      # A volume is persistence, not a backup (spec §68).
+      - committeeflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-committeeflow} -d ${POSTGRES_DB:-committeeflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - committeeflow
+
+networks:
+  committeeflow:
+    driver: bridge
+
+volumes:
+  committeeflow_pgdata:
+    name: committeeflow_pgdata

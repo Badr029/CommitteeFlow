@@ -1,0 +1,10 @@
+{
+  "beforeFix": {
+    "fieldId": "_r_8_",
+    "ariaRequired": "(absent)",
+    "requiredAttribute": "(absent)",
+    "asteriskAriaHidden": "true",
+    "labelText": "OFF No.*",
+    "accessibleName": "OFF No."
+  }
+}

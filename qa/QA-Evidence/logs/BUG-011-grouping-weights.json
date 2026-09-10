@@ -1,0 +1,10 @@
+{
+  "preFix": {
+    "dayHeading": "rgb(236, 238, 240)",
+    "sessionHeading": "rgb(230, 233, 236)",
+    "projectRow": "rgba(0, 0, 0, 0)",
+    "dayBoxBorder": "0px",
+    "minimiseControlsVisible": 0,
+    "dayFiltersVisible": 0
+  }
+}

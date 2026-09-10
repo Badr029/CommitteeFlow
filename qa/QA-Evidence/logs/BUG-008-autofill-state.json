@@ -1,0 +1,7 @@
+{
+  "preFix": {
+    "emailOnScreen": "ahmed@committeeflow.test",
+    "passwordCharacters": 21,
+    "submitDisabled": true
+  }
+}

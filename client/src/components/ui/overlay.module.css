@@ -1,0 +1,257 @@
+/*
+ * Overlays: the side drawer and the confirm dialog.
+ *
+ * Motion is the one authored moment in the product. The drawer is where an
+ * engineer books a slot, so it enters from the edge it will return to, fast
+ * enough (170ms) not to sit between the user and the task. Everything else in
+ * the app animates only to acknowledge a state change.
+ */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: var(--surface-scrim);
+  animation: scrim-in var(--duration-base) var(--ease-out);
+}
+
+.scrim[data-state='closed'] {
+  animation: scrim-out var(--duration-fast) var(--ease-out);
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+}
+@keyframes scrim-out {
+  to { opacity: 0; }
+}
+
+/* ── Drawer ─────────────────────────────────────────────────────────────── */
+
+.drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: var(--z-overlay);
+  width: min(560px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-panel);
+  border-inline-start: 1px solid var(--rule);
+  box-shadow: var(--shadow-overlay);
+  animation: drawer-in var(--duration-base) var(--ease-out);
+}
+
+.drawer[data-state='closed'] {
+  animation: drawer-out var(--duration-fast) var(--ease-out);
+}
+
+.wide { width: min(760px, 100vw); }
+
+@keyframes drawer-in {
+  from { transform: translateX(16px); opacity: 0; }
+}
+@keyframes drawer-out {
+  to { transform: translateX(16px); opacity: 0; }
+}
+
+.drawerHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-7) var(--space-5);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface-chrome);
+}
+
+.drawerTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1;
+}
+
+.drawerTitle {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: var(--track-tight);
+}
+
+.drawerSubtitle {
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-7);
+}
+
+.drawerFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-7);
+  border-top: 1px solid var(--rule);
+  background: var(--surface-chrome);
+}
+
+.footSpacer { flex: 1; }
+
+/* ── Dialog ─────────────────────────────────────────────────────────────── */
+
+.dialog {
+  position: fixed;
+  z-index: var(--z-overlay);
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: min(440px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-7);
+  background: var(--surface-panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  animation: dialog-in var(--duration-base) var(--ease-out);
+}
+
+.dialog[data-state='closed'] {
+  animation: dialog-out var(--duration-fast) var(--ease-out);
+}
+
+@keyframes dialog-in {
+  from { transform: translateY(6px) scale(0.985); opacity: 0; }
+}
+@keyframes dialog-out {
+  to { transform: translateY(4px) scale(0.99); opacity: 0; }
+}
+
+.dialogTitle {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.dialogBody {
+  font-size: var(--text-base);
+  color: var(--ink-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+/* ── Phone sheet ────────────────────────────────────────────────────────── */
+
+/*
+ * The same dialog, arriving from the bottom.
+ *
+ * A 375px-wide panel sliding in from the right is indistinguishable from the
+ * screen replacing itself, so on a phone the panel comes up from the edge the
+ * thumb is already near. The scrim stays: the month underneath is still the
+ * context you are booking into.
+ */
+.sheet {
+  inset-block: auto 0;
+  inset-inline: 0;
+  width: 100%;
+  /*
+   * Short of full height on purpose — the strip of plan left showing is what
+   * says "this is a layer over the month", and it is where a tap dismisses.
+   */
+  height: calc(100dvh - var(--space-9) - var(--safe-top));
+  max-height: calc(100dvh - var(--space-9) - var(--safe-top));
+  border-inline-start: none;
+  border-top: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  animation: sheet-in var(--duration-base) var(--ease-out);
+}
+
+.sheet[data-state='closed'] {
+  animation: sheet-out var(--duration-fast) var(--ease-out);
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(14px); opacity: 0; }
+}
+@keyframes sheet-out {
+  to { transform: translateY(14px); opacity: 0; }
+}
+
+/* Content-sized, for a short set of choices rather than a form. */
+.sheetAuto {
+  height: auto;
+  max-height: min(86dvh, calc(100dvh - var(--space-9) - var(--safe-top)));
+}
+
+/*
+ * The grabber is the affordance that says which edge this came from. It is
+ * decorative: dismissal is the close button, the scrim and Escape, all of
+ * which work without a gesture.
+ */
+.grabber {
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: var(--space-3) auto var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--rule-strong);
+}
+
+.sheet .drawerHead {
+  padding: var(--space-4) var(--space-5) var(--space-4);
+}
+
+.sheet .drawerBody {
+  padding: var(--space-6) var(--space-5);
+  /* Momentum scrolling that stops at the sheet rather than dragging the page. */
+  overscroll-behavior: contain;
+}
+
+/*
+ * Actions stay reachable without scrolling back, and clear of the home
+ * indicator. `max()` rather than a plain add, so a device with no inset keeps
+ * the normal padding instead of losing it.
+ */
+.sheet .drawerFoot {
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  padding-bottom: max(var(--space-4), var(--safe-bottom));
+}
+
+/*
+ * A phone footer stacks its actions full-width and puts the confirming one
+ * first in visual order, so the thumb lands on it rather than on Cancel.
+ */
+.sheet .drawerFoot > button {
+  flex: 1;
+  min-height: var(--control-height-touch);
+}
+
+@media (max-width: 640px) {
+  .drawer,
+  .wide { width: 100vw; }
+  .drawerHead,
+  .drawerBody,
+  .drawerFoot { padding-inline: var(--space-5); }
+
+  /* A confirm dialog is already small; on a phone it just needs room to breathe
+     and targets a finger can hit. */
+  .dialog {
+    width: calc(100vw - var(--space-6));
+    padding: var(--space-6);
+  }
+  .dialogActions { flex-direction: column-reverse; }
+  .dialogActions > button {
+    width: 100%;
+    min-height: var(--control-height-touch);
+  }
+}

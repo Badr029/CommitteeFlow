@@ -1,0 +1,31 @@
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+npm-debug.log*
+yarn-error.log*
+*.log
+
+.DS_Store
+Thumbs.db
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+/tmp/
+/server/exports-tmp/
+
+# Stray output if a typecheck is ever run with emit enabled by mistake.
+client/src/**/*.js
+client/src/**/*.js.map
+
+# QA evidence tooling — installed on demand, never shipped.
+qa/tools/node_modules/
+qa/tools/browsers/

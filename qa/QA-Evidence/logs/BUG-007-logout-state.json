@@ -1,0 +1,8 @@
+{
+  "preFix": {
+    "sessionStatus": 401,
+    "stillShowsPlan": true,
+    "stillShowsIdentity": false,
+    "signInFormPresent": false
+  }
+}

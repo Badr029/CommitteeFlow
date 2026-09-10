@@ -1,0 +1,23 @@
+{
+  "preFix": {
+    "before": {
+      "ariaExpanded": "true"
+    },
+    "ariaExpandedAfter": "false",
+    "hiddenAttribute": true,
+    "computedDisplay": "flex",
+    "stillOnScreen": true
+  },
+  "shipped": {
+    "day": {
+      "hidden": true,
+      "display": "none",
+      "height": 0
+    },
+    "session": {
+      "hidden": true,
+      "display": "none",
+      "height": 0
+    }
+  }
+}

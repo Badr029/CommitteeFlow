@@ -1,0 +1,383 @@
+/*
+ * The plan's controls at phone and tablet width, and the filter sheet they open.
+ *
+ * Every interactive thing here is at least 44px tall. That is the one place
+ * this design's density gives way: the plan itself can stay tight because it is
+ * read, but a control is touched, and a 28px button is a miss.
+ */
+
+.toolbar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-page);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ── Month ──────────────────────────────────────────────────────────────── */
+
+.monthRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.monthStep {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  flex: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.monthStep:active { background: var(--surface-selected); }
+
+.monthLabel {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: var(--track-tight);
+  white-space: nowrap;
+  padding-inline: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monthSpacer { flex: 1; }
+
+.todayButton,
+.bookButton {
+  flex: none;
+  height: var(--control-height-touch);
+  padding-inline: var(--space-5);
+  font-size: var(--text-base);
+}
+
+/*
+ * Booking is the product's primary action, so on a phone it lives in the one
+ * bar that never scrolls away rather than floating over the plan. A circular
+ * button dropped on top of an instrument panel would be the only round thing
+ * in the product; this is the same button the desktop uses, at thumb size.
+ */
+.bookButton { min-width: 92px; }
+
+/* ── Search and filters ─────────────────────────────────────────────────── */
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--space-4);
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: var(--control-height-touch);
+  padding: 0 40px 0 34px;
+  background: var(--surface-input);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  /*
+   * 16px, not the 13px the desktop toolbar uses: iOS Safari zooms the page when
+   * a focused input's text is smaller than this, and the zoom does not undo.
+   */
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.searchInput:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+/* The clear control gets a real target, not a 20px hit area beside the caret. */
+.clearSearch {
+  position: absolute;
+  right: var(--space-1);
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  border-radius: var(--radius-sm);
+}
+
+.clearSearch:active { color: var(--ink); background: var(--surface-hover); }
+
+.filterButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: none;
+  height: var(--control-height-touch);
+  padding-inline: var(--space-5);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-input);
+  color: var(--ink);
+  font-size: var(--text-base);
+  font-weight: 500;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filterButton:active { background: var(--surface-hover); }
+
+.filterButtonOn {
+  border-color: var(--accent-rule);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.filterCount {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Under 400px the word goes and the icon plus count carries it. */
+@media (max-width: 399px) {
+  .filterButtonLabel { display: none; }
+  .filterButton { padding-inline: var(--space-4); }
+}
+
+/* ── Active filter chips ────────────────────────────────────────────────── */
+
+/*
+ * Filters that are doing something are never invisible. A phone hides the
+ * controls behind a sheet, so without this the month could be silently filtered
+ * and read as empty.
+ */
+.chipRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 32px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--accent-rule);
+  border-radius: var(--radius-sm);
+  background: var(--accent-surface);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip:active { filter: brightness(0.96); }
+
+.clearAll {
+  flex: none;
+  height: 32px;
+  padding-inline: var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--ink-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* ── Filter sheet ───────────────────────────────────────────────────────── */
+
+.filterSheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.filterSheet select {
+  height: var(--control-height-touch);
+  font-size: 16px;
+}
+
+.switchList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-panel);
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: var(--tap-comfortable);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--rule-hairline);
+  cursor: pointer;
+  user-select: none;
+}
+
+.switchList > .switchRow:last-child { border-bottom: none; }
+
+.switchText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.switchLabel {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.switchHint {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  line-height: var(--leading-normal);
+}
+
+/* The real control stays in the accessibility tree and drives the visual. */
+.switchInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switchTrack {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-chrome);
+  border: 1px solid var(--rule-strong);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-raised);
+  transition: translate var(--duration-base) var(--ease-out);
+}
+
+.switchRow[data-on='true'] .switchTrack {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.switchRow[data-on='true'] .switchThumb { translate: 18px 0; }
+
+.switchRow:has(.switchInput:focus-visible) .switchTrack {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Wider than a portrait phone ────────────────────────────────────────── */
+
+/*
+ * Once there is 600px of width — a tablet, or a phone turned sideways — the
+ * month, the search and the filters fit on one line. This is a width question,
+ * not a device one: a phone in landscape has the width and very little height,
+ * so it is exactly where collapsing two rows into one matters most.
+ */
+@media (min-width: 600px) {
+  .toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .monthRow { flex: none; }
+  .searchRow { flex: 1; min-width: 280px; }
+  .chipRow { flex-basis: 100%; }
+
+  .monthLabel { font-size: var(--text-lg); }
+  .searchInput { font-size: var(--text-base); }
+}
+
+/* ── Short viewports ────────────────────────────────────────────────────── */
+
+/*
+ * A phone in landscape is about 375px tall. With a 52px bar, a two-row
+ * toolbar, a summary strip and a 56px navigation bar, the plan itself was left
+ * 96px — one session heading and half a row. The chrome gives up its padding
+ * before the content gives up its space.
+ */
+@media (max-height: 460px) {
+  .toolbar {
+    padding-block: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .monthStep,
+  .todayButton,
+  .bookButton,
+  .filterButton,
+  .searchInput {
+    height: 38px;
+    min-height: 38px;
+  }
+
+  .monthLabel { font-size: var(--text-base); }
+
+  .chipRow { display: none; }
+}

@@ -1,0 +1,203 @@
+/*
+ * CommitteeFlow design tokens — the "instrument panel" world.
+ *
+ * One world, two palettes. Light is the default; dark is the same instrument
+ * rendered for a low-light room, not a separate design. Every colour below is
+ * defined once in `:root` and only redefined in the dark block, so no component
+ * ever needs to know which palette is active.
+ *
+ * Density is the point: this plan is scanned all day. Rows are 26px, rules are
+ * hairlines, and the accent is spent only on the current selection and on
+ * meaning (status, conflict, cancelled) — never on decoration.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --surface-page: #f7f8f8;
+  --surface-panel: #ffffff;
+  --surface-chrome: #eceef0;
+  --surface-sunken: #f1f3f5;
+  --surface-input: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-hover: #f4f6f7;
+  --surface-selected: #e2e9ef;
+  /* One step past --surface-sunken — a committee session's own band needs to
+     read as a distinct layer against a white panel, not a near-white one. */
+  --surface-session-head: #e6e9ec;
+  --surface-scrim: rgb(20 24 28 / 0.34);
+
+  /* ── Ink ──────────────────────────────────────────────────────────────── */
+  --ink: #14181c;
+  --ink-secondary: #4d5761;
+  /*
+   * Muted ink carries 11px uppercase labels (column headings, day counts), so
+   * it is set from the contrast requirement rather than by eye: #606c77 clears
+   * 4.5:1 against --surface-chrome, the lightest ground it ever sits on.
+   */
+  --ink-muted: #606c77;
+  --ink-inverse: #ffffff;
+
+  /* ── Rules ────────────────────────────────────────────────────────────── */
+  --rule: #dbe0e4;
+  --rule-strong: #c6ced4;
+  --rule-hairline: #eef1f3;
+
+  /* ── Accent: selection and primary meaning only ───────────────────────── */
+  --accent: #0f4c81;
+  --accent-hover: #0c3d69;
+  --accent-ink: #ffffff;
+  --accent-surface: #e4edf5;
+  --accent-rule: #b8cfe2;
+
+  /* ── Semantic state. Separate from the accent, by design. ─────────────── */
+  --ok-ink: #1a6b3c;
+  --ok-surface: #e6f3ec;
+  --ok-rule: #bcdcc9;
+
+  --warn-ink: #8a4b04;
+  --warn-surface: #fdf3e3;
+  --warn-rule: #eddcbd;
+
+  --danger-ink: #a02525;
+  --danger-surface: #fbebeb;
+  --danger-rule: #edc9c9;
+
+  --neutral-ink: #33414d;
+  --neutral-surface: #eef1f4;
+  --neutral-rule: #d3dae0;
+
+  /* ── Elevation. Offset plus soft blur; never a coloured halo. ─────────── */
+  --shadow-raised: 0 1px 2px rgb(20 24 28 / 0.07), 0 2px 6px -2px rgb(20 24 28 / 0.08);
+  --shadow-overlay: 0 2px 4px rgb(20 24 28 / 0.08), 0 18px 44px -18px rgb(20 24 28 / 0.4);
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  --font-ui: "Barlow", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-label: "Barlow Semi Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
+
+  /* Fixed rem scale — product UI is read at a consistent DPI. */
+  --text-xs: 0.6875rem;   /* 11px  — column headings, pills */
+  --text-sm: 0.8125rem;   /* 13px  — secondary */
+  --text-base: 0.875rem;  /* 14px  — table body, forms */
+  --text-md: 0.9375rem;   /* 15px  — emphasis */
+  --text-lg: 1.0625rem;   /* 17px  — month, panel titles */
+  --text-xl: 1.375rem;    /* 22px  — page title */
+  --text-2xl: 1.75rem;    /* 28px  — sign-in */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --track-label: 0.075em;
+  --track-tight: -0.011em;
+
+  /* ── Space ────────────────────────────────────────────────────────────── */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 12px;
+  --space-6: 16px;
+  --space-7: 20px;
+  --space-8: 24px;
+  --space-9: 32px;
+  --space-10: 44px;
+
+  /* ── Shape. Small radii: this is equipment, not a card deck. ──────────── */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 5px;
+  --radius-pill: 999px;
+
+  /* ── Density ──────────────────────────────────────────────────────────── */
+  --row-height: 26px;
+  --control-height: 28px;
+  --control-height-lg: 32px;
+  --topbar-height: 44px;
+
+  /*
+   * Touch density.
+   *
+   * The desktop plan is 26px rows read with a mouse. A finger needs far more,
+   * so touch surfaces size from these rather than from --control-height. 44px
+   * is the floor; 48px is what the bottom navigation and the primary actions
+   * actually get, because those are hit while walking a factory floor.
+   */
+  --tap-min: 44px;
+  --tap-comfortable: 48px;
+  --control-height-touch: 44px;
+  --mobile-topbar-height: 52px;
+  --bottom-nav-height: 56px;
+
+  /*
+   * Safe areas. Zero on a desktop browser, real on a notched phone. Read
+   * through variables so every sticky surface treats them the same way.
+   */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* ── Motion. State only, never choreography. ──────────────────────────── */
+  --ease-out: cubic-bezier(0.16, 0.84, 0.44, 1);
+  --duration-fast: 110ms;
+  --duration-base: 170ms;
+  --duration-slow: 230ms;
+
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-toast: 200;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-page: #101418;
+  --surface-panel: #151a1f;
+  --surface-chrome: #171c21;
+  --surface-sunken: #1a2026;
+  --surface-input: #1b2126;
+  --surface-raised: #1a2026;
+  --surface-hover: #1c2329;
+  --surface-selected: #23303a;
+  /* Unchanged from --surface-sunken: the dark palette's sunken tone already
+     reads as a distinct band against the panel, so this fix is light-only. */
+  --surface-session-head: #1a2026;
+  --surface-scrim: rgb(4 7 10 / 0.6);
+
+  --ink: #e2e8ed;
+  --ink-secondary: #a4aeb8;
+  --ink-muted: #7d8993;
+  --ink-inverse: #08121a;
+
+  --rule: #262e35;
+  --rule-strong: #333d45;
+  --rule-hairline: #1e252b;
+
+  /* Lifted and desaturated so it carries on a dark ground at the same weight. */
+  --accent: #5fb3e0;
+  --accent-hover: #7cc3ea;
+  --accent-ink: #08121a;
+  --accent-surface: #172b39;
+  --accent-rule: #27455a;
+
+  --ok-ink: #62c48d;
+  --ok-surface: #13291d;
+  --ok-rule: #22452f;
+
+  --warn-ink: #e0a53f;
+  --warn-surface: #2a2213;
+  --warn-rule: #443619;
+
+  --danger-ink: #ef8080;
+  --danger-surface: #2c1719;
+  --danger-rule: #4a2528;
+
+  --neutral-ink: #a9b6c1;
+  --neutral-surface: #1d252c;
+  --neutral-rule: #2c353d;
+
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.45);
+  --shadow-overlay: 0 2px 4px rgb(0 0 0 / 0.45), 0 18px 44px -18px rgb(0 0 0 / 0.8);
+}

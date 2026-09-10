@@ -1,0 +1,321 @@
+/*
+ * Control vocabulary.
+ *
+ * One button shape, one field shape, one pill shape, used everywhere. Every
+ * control declares the full state set — default, hover, focus, active,
+ * disabled, and loading where it applies.
+ */
+
+/* ── Button ─────────────────────────────────────────────────────────────── */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  height: var(--control-height);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.012em;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.button:disabled {
+  opacity: 0.5;
+}
+
+.large {
+  height: var(--control-height-lg);
+  padding: 0 var(--space-6);
+  font-size: var(--text-base);
+}
+
+.small {
+  height: 24px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-xs);
+}
+
+/* Primary: near-black in light, accent in dark. The instrument's own switch. */
+.primary {
+  background: var(--ink);
+  color: var(--surface-panel);
+}
+.primary:hover:not(:disabled) { background: #2b333b; }
+.primary:active:not(:disabled) { background: #0c1013; }
+
+[data-theme='dark'] .primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+[data-theme='dark'] .primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+.secondary {
+  background: var(--surface-input);
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+.secondary:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--ink-muted); }
+.secondary:active:not(:disabled) { background: var(--surface-sunken); }
+
+.ghost {
+  background: transparent;
+  color: var(--ink-secondary);
+}
+.ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--ink); }
+
+.danger {
+  background: var(--danger-ink);
+  color: #ffffff;
+}
+.danger:hover:not(:disabled) { filter: brightness(1.1); }
+
+[data-theme='dark'] .danger { color: var(--ink-inverse); }
+
+.linkish {
+  background: transparent;
+  color: var(--accent);
+  height: auto;
+  padding: 0;
+  font-size: inherit;
+}
+.linkish:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 0.18em; }
+
+/* Icon-only. Kept at 28px so the hit target clears the 24px visual. */
+.iconOnly {
+  width: var(--control-height);
+  padding: 0;
+}
+.iconOnly.small { width: 24px; }
+.iconOnly.large { width: var(--control-height-lg); }
+
+.spinner {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 640ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Field ──────────────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.fieldLabel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+
+.required {
+  color: var(--danger-ink);
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.optional {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  text-transform: none;
+  font-size: var(--text-xs);
+}
+
+.control {
+  width: 100%;
+  height: var(--control-height-lg);
+  padding: 0 var(--space-4);
+  background: var(--surface-input);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.control:hover:not(:disabled):not([aria-invalid='true']) {
+  border-color: var(--ink-muted);
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+.control:disabled {
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+}
+
+.control[aria-invalid='true'] {
+  border-color: var(--danger-ink);
+  background: var(--danger-surface);
+}
+
+textarea.control {
+  height: auto;
+  min-height: 76px;
+  padding: var(--space-3) var(--space-4);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+select.control {
+  appearance: none;
+  padding-right: var(--space-8);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 14px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--control-height-lg);
+}
+
+.checkbox {
+  width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-input);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  color: var(--accent-ink);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.checkbox[data-state='checked'] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.checkbox:hover { border-color: var(--ink-muted); }
+
+.checkboxLabel {
+  font-size: var(--text-base);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.help {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  line-height: var(--leading-normal);
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--danger-ink);
+  line-height: var(--leading-normal);
+}
+
+/* ── Pill ───────────────────────────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 1px var(--space-3);
+  border: 1px solid var(--neutral-rule);
+  border-radius: var(--radius-sm);
+  background: var(--neutral-surface);
+  color: var(--neutral-ink);
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pillAccent { background: var(--accent-surface); color: var(--accent); border-color: var(--accent-rule); }
+.pillOk { background: var(--ok-surface); color: var(--ok-ink); border-color: var(--ok-rule); }
+.pillWarn { background: var(--warn-surface); color: var(--warn-ink); border-color: var(--warn-rule); }
+.pillDanger { background: var(--danger-surface); color: var(--danger-ink); border-color: var(--danger-rule); }
+
+/* ── Skeleton ───────────────────────────────────────────────────────────── */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    var(--surface-hover) 40%,
+    var(--surface-sunken) 80%
+  );
+  background-size: 240% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s var(--ease-out) infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -140% 0; }
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-10) var(--space-7);
+  text-align: center;
+  color: var(--ink-secondary);
+}
+
+.emptyIcon {
+  color: var(--ink-muted);
+  opacity: 0.75;
+}
+
+.emptyTitle {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.emptyBody {
+  max-width: 46ch;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.emptyAction { margin-top: var(--space-2); }

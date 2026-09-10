@@ -1,0 +1,37 @@
+# Local development dependencies only.
+#
+#   npm run db:up      start PostgreSQL on localhost:5433
+#   npm run db:down    stop it
+#
+# The application itself runs on the host via `npm run dev` so that Vite HMR and
+# tsx watch stay fast. For the full containerised stack use docker-compose.yml.
+
+name: committeeflow-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: committeeflow-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: committeeflow
+      POSTGRES_PASSWORD: committeeflow
+      POSTGRES_DB: committeeflow
+      # Deterministic collation so ORDER BY matches production.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      # Host 5433 avoids clashing with a locally installed PostgreSQL on 5432.
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - committeeflow_dev_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U committeeflow -d committeeflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  committeeflow_dev_pgdata:
+    name: committeeflow_dev_pgdata

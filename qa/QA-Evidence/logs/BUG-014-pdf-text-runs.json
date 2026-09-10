@@ -1,0 +1,13 @@
+{
+  "pdf": "final-plan.pdf",
+  "sizeBytes": 27970,
+  "pages": 3,
+  "textRuns": 411,
+  "fonts": [
+    "/BaseFont /CZZZZZ+Cairo-Regular",
+    "/BaseFont /DZZZZZ+Cairo-Bold"
+  ],
+  "embedsFontProgram": true,
+  "unreadableRuns": [],
+  "verdict": "every text run reads back as the characters it was drawn from"
+}
