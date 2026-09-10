@@ -275,3 +275,7 @@ function mountSpa(app: Express): void {
 
   logger.info({ distPath }, 'serving client build');
 }
+
+const app = createApp();
+
+export default app;

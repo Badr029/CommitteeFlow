@@ -1,4 +1,4 @@
-import { createApp } from './app.js';
+import app from './app.js';
 import { env } from './config/env.js';
 import { closePool, getPool } from './db/pool.js';
 import { logger } from './lib/logger.js';
@@ -31,7 +31,7 @@ async function main(): Promise<void> {
     void mailer.verify();
   }
 
-  const app = createApp();
+  
   const server = app.listen(config.PORT, () => {
     logger.info(
       { port: config.PORT, env: config.NODE_ENV, mailer: mailer.mode },
