@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import express, { type Express, Router } from 'express';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
+import * as helmetModule from 'helmet';
+import type { HelmetOptions } from 'helmet';
 import crypto from 'node:crypto';
 import { processOutboxBatch } from './modules/notifications/outbox.worker.js';
 import { pinoHttp } from 'pino-http';
@@ -26,7 +27,7 @@ import { planImportRouter } from './modules/plan-import/plan-import.routes.js';
 
 
 const APP_VERSION = process.env['npm_package_version'] ?? '0.1.0';
-
+const helmet = helmetModule.default;
 /**
  * The Express application.
  *
@@ -191,7 +192,7 @@ function apiRouter(): Router {
  * Radix set them for positioning; that is a far smaller surface than inline
  * script execution.
  */
-function helmetOptions(): Parameters<typeof helmet>[0] {
+function helmetOptions(): HelmetOptions {
   return {
     contentSecurityPolicy: {
       useDefaults: false,
