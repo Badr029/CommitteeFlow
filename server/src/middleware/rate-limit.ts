@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import {rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import type { RequestHandler } from 'express';
 import { env } from '../config/env.js';
 import { AppError } from '../lib/errors.js';
