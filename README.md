@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CommitteeFlow
 
 **Live Committee Planning & Booking System for industrial operations.**
@@ -732,3 +733,6 @@ CommitteeFlow/
 ├── docker-compose.dev.yml     PostgreSQL only, for development
 └── Dockerfile                 multi-stage, non-root runtime
 ```
+=======
+# Committee-Management-System
+>>>>>>> b91a21f23f22db4b5df6b8a7b5846ba15a73d74d
