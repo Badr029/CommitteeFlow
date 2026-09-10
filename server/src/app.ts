@@ -5,6 +5,8 @@ import express, { type Express, Router } from 'express';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import crypto from 'node:crypto';
+import { processOutboxBatch } from './modules/notifications/outbox.worker.js';
 import { pinoHttp } from 'pino-http';
 import type { HealthResponse } from '@shared/api-types.js';
 import { env, isProduction } from './config/env.js';
@@ -21,6 +23,7 @@ import { usersRouter } from './modules/users/users.routes.js';
 import { activityRouter } from './modules/audit/activity.routes.js';
 import { exportRouter } from './modules/export/export.routes.js';
 import { planImportRouter } from './modules/plan-import/plan-import.routes.js';
+
 
 const APP_VERSION = process.env['npm_package_version'] ?? '0.1.0';
 
@@ -71,6 +74,49 @@ export function createApp(): Express {
    * session store it would fail with a 500 instead of a useful "degraded".
    */
   app.get('/api/health', healthHandler);
+
+  app.post(
+  '/api/internal/process-outbox',
+  asyncHandler(async (req, res) => {
+      const expected = process.env.CRON_SECRET;
+      const authorization = req.get('authorization');
+
+      if (!expected || !authorization?.startsWith('Bearer ')) {
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'Authentication required.',
+          },
+        });
+        return;
+      }
+
+      const provided = authorization.slice('Bearer '.length);
+
+      const expectedBuffer = Buffer.from(expected);
+      const providedBuffer = Buffer.from(provided);
+
+      if (
+        expectedBuffer.length !== providedBuffer.length ||
+        !crypto.timingSafeEqual(expectedBuffer, providedBuffer)
+      ) {
+        res.status(401).json({
+          error: {
+            code: 'UNAUTHENTICATED',
+            message: 'Authentication required.',
+          },
+        });
+        return;
+      }
+
+      const result = await processOutboxBatch();
+
+      res.status(200).json({
+        ok: true,
+        ...result,
+      });
+    }),
+  );
 
   app.use(buildSessionMiddleware());
   app.use(attachCsrfToken);

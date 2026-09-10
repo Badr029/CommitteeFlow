@@ -1,10 +1,10 @@
-import crypto from 'node:crypto';
-import connectPgSimple from 'connect-pg-simple';
-import session from 'express-session';
-import type { RequestHandler } from 'express';
-import type { UserRole } from '@shared/api-types.js';
-import { env } from '../../config/env.js';
-import { getPool } from '../../db/pool.js';
+import crypto from "node:crypto";
+import connectPgSimple from "connect-pg-simple";
+import session from "express-session";
+import type { RequestHandler } from "express";
+import type { UserRole } from "@shared/api-types.js";
+import { env } from "../../config/env.js";
+import { getPool } from "../../db/pool.js";
 
 /**
  * Session-backed authentication (spec §39).
@@ -14,7 +14,7 @@ import { getPool } from '../../db/pool.js';
  * and the browser never receives a bearer token it could leak.
  */
 
-declare module 'express-session' {
+declare module "express-session" {
   interface SessionData {
     userId?: string;
     /** Cached for cheap authorisation; re-read from the DB on every request. */
@@ -36,7 +36,7 @@ export function buildSessionMiddleware(): RequestHandler {
     secret: config.SESSION_SECRET,
     store: new PgSession({
       pool: getPool(),
-      tableName: 'session',
+      tableName: "session",
       // The schema is owned by our migrations, not by the store.
       createTableIfMissing: false,
       pruneSessionInterval: 60 * 15,
@@ -50,48 +50,61 @@ export function buildSessionMiddleware(): RequestHandler {
       secure: config.COOKIE_SECURE,
       sameSite: config.COOKIE_SAMESITE,
       maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
-      path: '/',
+      path: "/",
     },
   });
 }
 
 export function generateCsrfToken(): string {
-  return crypto.randomBytes(32).toString('base64url');
+  return crypto.randomBytes(32).toString("base64url");
 }
 
 /** Normalises the store's `err` callback argument into a real Error. */
 function asError(cause: unknown, action: string): Error {
-  return cause instanceof Error ? cause : new Error(`session ${action} failed`, { cause });
-}
+  const detail =
+    cause instanceof Error && cause.message
+      ? `: ${cause.message}`
+      : '';
 
+  return new Error(`session ${action} failed${detail}`, {
+    cause,
+  });
+}
 /**
  * Regenerates the session id while carrying the CSRF secret across.
  *
  * Called immediately after a successful password check so a session id an
  * attacker planted before login becomes worthless (session fixation).
  */
-export async function regenerateSession(
-  req: { session: import('express-session').Session & Partial<import('express-session').SessionData> },
-): Promise<void> {
+export async function regenerateSession(req: {
+  session: import("express-session").Session &
+    Partial<import("express-session").SessionData>;
+}): Promise<void> {
   const csrfToken = req.session.csrfToken;
   await new Promise<void>((resolve, reject) => {
-    req.session.regenerate((error) => (error ? reject(asError(error, 'regenerate')) : resolve()));
+    req.session.regenerate((error) =>
+      error ? reject(asError(error, "regenerate")) : resolve(),
+    );
   });
   req.session.csrfToken = csrfToken ?? generateCsrfToken();
 }
 
-export async function destroySession(
-  req: { session: import('express-session').Session },
-): Promise<void> {
+export async function destroySession(req: {
+  session: import("express-session").Session;
+}): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    req.session.destroy((error) => (error ? reject(asError(error, 'destroy')) : resolve()));
+    req.session.destroy((error) =>
+      error ? reject(asError(error, "destroy")) : resolve(),
+    );
   });
 }
 
-export async function saveSession(
-  req: { session: import('express-session').Session },
-): Promise<void> {
+export async function saveSession(req: {
+  session: import("express-session").Session;
+}): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    req.session.save((error) => (error ? reject(asError(error, 'save')) : resolve()));
+    req.session.save((error) =>
+      error ? reject(asError(error, "save")) : resolve(),
+    );
   });
 }
