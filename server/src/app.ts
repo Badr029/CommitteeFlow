@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import express, { type Express, Router } from 'express';
+import express, { type Express,type RequestHandler, Router } from 'express';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import * as helmetModule from 'helmet';
@@ -27,7 +27,9 @@ import { planImportRouter } from './modules/plan-import/plan-import.routes.js';
 
 
 const APP_VERSION = process.env['npm_package_version'] ?? '0.1.0';
-const helmet = helmetModule.default;
+const helmet = helmetModule.default as unknown as (
+  options?: Readonly<HelmetOptions>
+) => RequestHandler;
 /**
  * The Express application.
  *
