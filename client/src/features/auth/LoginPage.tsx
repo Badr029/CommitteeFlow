@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertCircle, Eye, EyeOff, Moon, Sun } from 'lucide-react';
 import { ApiError } from '@/api/client';
@@ -10,6 +11,7 @@ import { Field } from '@/components/ui/Field';
 import { controlClass } from '@/components/ui/classes';
 import { cn } from '@/lib/cn';
 import styles from './LoginPage.module.css';
+import { returnToFromState } from './returnTo';
 
 /**
  * Sign in.
@@ -33,6 +35,8 @@ export function LoginPage({
   onToggleTheme: () => void;
 }) {
   const login = useLogin();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [revealed, setRevealed] = useState(false);
@@ -62,6 +66,7 @@ export function LoginPage({
       { email: submittedEmail, password: submittedPassword },
       {
         onSuccess: (session) => {
+          navigate(returnToFromState(location.state), { replace: true });
           toast.success(`Signed in as ${session.user.name}`, {
             description:
               session.user.role === 'PROJECT_ENGINEER'

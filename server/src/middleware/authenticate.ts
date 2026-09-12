@@ -31,6 +31,7 @@ export function toCurrentUser(user: UserRecord): CurrentUser {
     role: user.role,
     canManagePlanConfiguration: user.canManagePlanConfiguration,
     notifyByEmail: user.notifyByEmail,
+    mustChangePassword: user.mustChangePassword,
     permissions: {
       canCreateBooking: user.role === 'PROJECT_ENGINEER',
       canManagePlanConfiguration: user.canManagePlanConfiguration,
@@ -61,6 +62,15 @@ export const requireAuth: RequestHandler = asyncHandler(async (req, _res, next) 
   req.user = user;
   next();
 });
+
+/** Temporary-password sessions may only reach auth routes until replacement. */
+export const requirePasswordChangeComplete: RequestHandler = (req, _res, next) => {
+  const user = currentUser(req);
+  if (user.mustChangePassword) {
+    return next(forbidden('Change your temporary password before continuing.'));
+  }
+  return next();
+};
 
 /** The authenticated user, or a hard failure if a route forgot `requireAuth`. */
 export function currentUser(req: Request): UserRecord {

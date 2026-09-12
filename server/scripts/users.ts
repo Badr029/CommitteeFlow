@@ -22,12 +22,10 @@
  */
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { hashPassword } from '../src/modules/auth/password.js';
+import { hashPassword, passwordPolicyIssues } from '../src/modules/auth/password.js';
 import { queryOne, queryRows } from '../src/db/index.js';
 import { closePool } from '../src/db/pool.js';
 import * as users from '../src/modules/users/users.repository.js';
-
-const MIN_PASSWORD = 10;
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -141,17 +139,18 @@ async function add(args: string[]): Promise<void> {
     role: flags.includes('--engineer') ? 'PROJECT_ENGINEER' : 'VIEWER',
     canManagePlanConfiguration: flags.includes('--can-configure'),
     notifyByEmail: !flags.includes('--no-email'),
+    mustChangePassword: true,
   });
 
   const extra = user.canManagePlanConfiguration ? ', can configure the plan' : '';
   console.log(`Created ${user.email} — ${user.role}${extra}.`);
-  console.log('Ask them to sign in and change this password.');
+  console.log('They must replace this temporary password at first sign-in.');
 }
 
 async function setPassword(email: string): Promise<void> {
   const user = await mustFind(email);
-  await users.setPasswordHash(user.id, await hashPassword(await readPassword()));
-  console.log(`Password updated for ${user.email}.`);
+  await users.setPasswordHash(user.id, await hashPassword(await readPassword()), true);
+  console.log(`Temporary password updated for ${user.email}; replacement is required at next sign-in.`);
 }
 
 async function setRole(email: string, role: string): Promise<void> {
@@ -222,9 +221,10 @@ async function mustFind(email: string) {
 
 async function readPassword(): Promise<string> {
   const fromEnv = process.env['CFLOW_PASSWORD']?.trim();
-  const password = fromEnv || (await prompt('New password (at least 10 characters): '));
-  if (password.length < MIN_PASSWORD) {
-    console.error(`The password must be at least ${MIN_PASSWORD} characters.`);
+  const password = fromEnv || (await prompt('Temporary password: '));
+  const issues = passwordPolicyIssues(password);
+  if (issues.length > 0) {
+    console.error(`The password must contain ${issues.join(', ')}.`);
     process.exit(1);
   }
   return password;

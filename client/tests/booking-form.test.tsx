@@ -189,7 +189,7 @@ describe('Booking form', () => {
       api.on('POST', '/api/bookings', { status: 201, body: booking() });
 
       renderWithProviders(
-        <BookingDrawer open mode="create" month="2026-09" onClose={vi.fn()} onSaved={onSaved} />,
+        <BookingDrawer open mode="create" month="2026-10" onClose={vi.fn()} onSaved={onSaved} />,
       );
 
       await screen.findByLabelText(/OFF No\./);
@@ -203,7 +203,7 @@ describe('Booking form', () => {
       expect(post?.csrf).toBe('test-csrf-token');
       const values = (post?.body as { values: Record<string, unknown> }).values;
       expect(values).toMatchObject({
-        booking_date: '2026-09-01',
+        booking_date: '2026-10-01',
         off_no: '202601066',
         order_name: 'Transformer 2B',
         committee: 'North Committee',

@@ -10,7 +10,7 @@ import {
   useUpdateBooking,
 } from '@/api/queries';
 import { bookingValue } from '@/lib/format';
-import { firstDayOf } from '@/lib/months';
+import { currentMonthKey, firstDayOf, todayKey } from '@/lib/months';
 import { useIsCompact } from '@/lib/viewport';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Drawer } from '@/components/ui/Drawer';
@@ -58,6 +58,8 @@ export function BookingDrawer({
    * something already legible.
    */
   const sectioned = useIsCompact();
+  const minimumDate = todayKey();
+  const minimumTime = new Date().toTimeString().slice(0, 5);
 
   const fields = useMemo(
     () =>
@@ -91,7 +93,7 @@ export function BookingDrawer({
       } else if (field.fieldKey === 'booking_date') {
         // Default to the month being viewed, so a future-month booking does not
         // silently land in today's month (spec §9).
-        seeded[field.fieldKey] = month ? firstDayOf(month) : null;
+        seeded[field.fieldKey] = month && month > currentMonthKey() ? firstDayOf(month) : minimumDate;
       } else if (field.fieldType === 'CHECKBOX') {
         seeded[field.fieldKey] = false;
       } else {
@@ -286,6 +288,8 @@ export function BookingDrawer({
                         value={values[field.fieldKey] ?? null}
                         error={fieldErrors[field.fieldKey]}
                         disabled={mutation.isPending}
+                        minDate={mode === 'create' ? minimumDate : undefined}
+                        minTime={mode === 'create' && values['booking_date'] === minimumDate ? minimumTime : undefined}
                         onChange={(value) => setValue(field.fieldKey, value)}
                       />
                     ))}
@@ -302,6 +306,8 @@ export function BookingDrawer({
                     error={fieldErrors[field.fieldKey]}
                     disabled={mutation.isPending}
                     autoFocus={index === 0 && mode === 'create'}
+                    minDate={mode === 'create' ? minimumDate : undefined}
+                    minTime={mode === 'create' && values['booking_date'] === minimumDate ? minimumTime : undefined}
                     onChange={(value) => setValue(field.fieldKey, value)}
                   />
                 ))}

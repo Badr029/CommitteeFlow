@@ -89,7 +89,7 @@ export async function claimMessage(): Promise<ClaimedMessage | undefined> {
 }
 
 /** Count the attempt durably BEFORE sending; crashes cannot reset retry limits. */
-export async function beginBatch(message: ClaimedMessage): Promise<DeliveryBatch | undefined> {
+export async function beginBatches(message: ClaimedMessage, limit: number): Promise<DeliveryBatch[]> {
   const config = env();
   return withTransaction(async (tx) => {
     const owner = await queryOne(`UPDATE email_outbox
@@ -98,23 +98,22 @@ export async function beginBatch(message: ClaimedMessage): Promise<DeliveryBatch
         AND status <> 'SENT' RETURNING id`,
     [message.id, message.claim_token, config.OUTBOX_LEASE_SECONDS], tx);
     if (!owner) throw new Error('OUTBOX_CLAIM_LOST');
-    const batch = await queryOne<DeliveryBatch>(`UPDATE email_outbox_batches
+    const batches = await queryRows<DeliveryBatch>(`UPDATE email_outbox_batches
       SET in_flight = true, attempt_count = attempt_count + 1
-      WHERE outbox_id = $1 AND batch_no = (
-        SELECT batch_no FROM email_outbox_batches WHERE outbox_id = $1
-          AND status <> 'SENT' ORDER BY batch_no LIMIT 1)
-        AND attempt_count < $2 AND NOT in_flight
+      WHERE (outbox_id, batch_no) IN (
+        SELECT outbox_id, batch_no FROM email_outbox_batches WHERE outbox_id = $1
+          AND status <> 'SENT' AND attempt_count < $2 AND NOT in_flight
+          ORDER BY batch_no LIMIT $3 FOR UPDATE SKIP LOCKED)
+        AND outbox_id = $1
       RETURNING batch_no, remaining_recipients, attempt_count`,
-    [message.id, config.OUTBOX_MAX_ATTEMPTS], tx);
-    if (batch) await queryOne(`UPDATE email_outbox SET attempt_count = attempt_count + 1 WHERE id = $1`, [message.id], tx);
-    else await queryOne(`UPDATE email_outbox SET claim_token = NULL, lease_until = NULL,
-      status = CASE WHEN EXISTS (SELECT 1 FROM email_outbox_batches WHERE outbox_id = $1 AND status <> 'SENT')
-        THEN 'FAILED'::outbox_status ELSE 'SENT'::outbox_status END,
-      sent_at = CASE WHEN NOT EXISTS (SELECT 1 FROM email_outbox_batches WHERE outbox_id = $1 AND status <> 'SENT')
-        THEN clock_timestamp() ELSE NULL END,
-      next_attempt_at = 'infinity'::timestamptz WHERE id = $1`, [message.id], tx);
-    return batch;
+    [message.id, config.OUTBOX_MAX_ATTEMPTS, limit], tx);
+    if (batches.length) await queryOne(`UPDATE email_outbox SET attempt_count = attempt_count + $2 WHERE id = $1`, [message.id, batches.length], tx);
+    return batches;
   });
+}
+
+export async function beginBatch(message: ClaimedMessage): Promise<DeliveryBatch | undefined> {
+  return (await beginBatches(message, 1))[0];
 }
 
 /** SMTP result and parent summary commit together; a DB failure leaves the lease. */
@@ -137,19 +136,45 @@ export async function finishBatch(message: ClaimedMessage, batch: DeliveryBatch,
         last_error = NULL, claim_token = NULL, lease_until = NULL WHERE id = $1`, [message.id], tx);
       return true;
     }
-    if (!failure) {
-      // One successful child is one scheduling quantum. Move this unfinished
-      // parent behind older eligible parents before releasing its claim.
-      await queryOne(`UPDATE email_outbox SET status = 'PENDING', last_error = NULL,
-        next_attempt_at = clock_timestamp() WHERE id = $1`, [message.id], tx);
-    }
+    // Successful siblings do not clear a failure recorded by another child in
+    // the same concurrent wave. The wave finalizer owns the parent summary.
     if (failure) {
       const delay = failure === 'DELIVERY_UNKNOWN' ? config.OUTBOX_AMBIGUOUS_RETRY_SECONDS : Math.min(4 ** batch.attempt_count, 3600);
       await queryOne(`UPDATE email_outbox SET status = 'FAILED', last_error = $2,
-        claim_token = NULL, lease_until = NULL, next_attempt_at = CASE WHEN $3 >= $4
+        next_attempt_at = CASE WHEN $3 >= $4
           THEN 'infinity'::timestamptz ELSE clock_timestamp() + make_interval(secs => $5) END
         WHERE id = $1`, [message.id, failure, batch.attempt_count, config.OUTBOX_MAX_ATTEMPTS, delay], tx);
     }
+    return false;
+  });
+}
+
+/** Summarise a completed child wave and release its fenced parent claim. */
+export async function finalizeMessage(message: ClaimedMessage): Promise<boolean> {
+  const config = env();
+  return withTransaction(async (tx) => {
+    const owner = await queryOne(`SELECT id FROM email_outbox WHERE id = $1
+      AND claim_token = $2 AND lease_until > clock_timestamp() AND status <> 'SENT'
+      FOR UPDATE`, [message.id, message.claim_token], tx);
+    if (!owner) return false;
+    const state = await queryOne<{ unfinished: number; in_flight: number; exhausted: number }>(`
+      SELECT count(*) FILTER (WHERE status <> 'SENT')::int AS unfinished,
+             count(*) FILTER (WHERE in_flight)::int AS in_flight,
+             count(*) FILTER (WHERE status <> 'SENT' AND attempt_count >= $2)::int AS exhausted
+        FROM email_outbox_batches WHERE outbox_id = $1`,
+    [message.id, config.OUTBOX_MAX_ATTEMPTS], tx);
+    if ((state?.in_flight ?? 0) > 0) return false;
+    if ((state?.unfinished ?? 0) === 0) {
+      await queryOne(`UPDATE email_outbox SET status = 'SENT', sent_at = clock_timestamp(),
+        last_error = NULL, claim_token = NULL, lease_until = NULL WHERE id = $1`, [message.id], tx);
+      return true;
+    }
+    await queryOne(`UPDATE email_outbox SET
+      status = CASE WHEN $2 > 0 OR last_error IS NOT NULL THEN 'FAILED'::outbox_status ELSE 'PENDING'::outbox_status END,
+      next_attempt_at = CASE WHEN $2 > 0 THEN 'infinity'::timestamptz
+        WHEN last_error IS NULL THEN clock_timestamp() ELSE next_attempt_at END,
+      claim_token = NULL, lease_until = NULL WHERE id = $1`,
+    [message.id, state?.exhausted ?? 0], tx);
     return false;
   });
 }

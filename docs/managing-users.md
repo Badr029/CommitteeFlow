@@ -68,7 +68,10 @@ On Windows PowerShell:
 $env:CFLOW_PASSWORD = 'a long first password'; npm run users -- add "Ahmed Fathy" ahmed@example.com --engineer; Remove-Item Env:CFLOW_PASSWORD
 ```
 
-Ask them to change it after their first sign-in.
+The application forces them to replace this temporary password at first sign-in.
+The new password must contain at least 12 characters, one uppercase letter, one
+lowercase letter, one number, and one symbol. Until it is changed, all protected
+application APIs are blocked. This also applies to the bootstrap administrator.
 
 ### Change someone
 
@@ -81,6 +84,10 @@ npm run users -- rename ahmed@example.com "Ahmed Fathy Ibrahim"
 
 `configure` does the same thing as the tick box on the Plan Configuration
 screen, and applies the same last-plan-manager guard.
+
+Resetting a password also marks it temporary. The user must replace it at the
+next sign-in. A signed-in user can change their own password from the menu under
+their name.
 
 ### When someone leaves
 

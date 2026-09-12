@@ -190,6 +190,7 @@ export function session(role: UserRole, canManagePlanConfiguration = false): Ses
       role,
       canManagePlanConfiguration,
       notifyByEmail: true,
+      mustChangePassword: false,
       permissions: {
         canCreateBooking: role === 'PROJECT_ENGINEER',
         canManagePlanConfiguration,

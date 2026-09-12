@@ -17,6 +17,18 @@ const HASH_OPTIONS = {
 
 /** Rejected before hashing so a huge input cannot become a CPU denial of service. */
 export const MAX_PASSWORD_BYTES = 256;
+export const MIN_PASSWORD_LENGTH = 12;
+
+export function passwordPolicyIssues(password: string): string[] {
+  const issues: string[] = [];
+  if (password.length < MIN_PASSWORD_LENGTH) issues.push(`at least ${MIN_PASSWORD_LENGTH} characters`);
+  if (!/[A-Z]/.test(password)) issues.push('an uppercase letter');
+  if (!/[a-z]/.test(password)) issues.push('a lowercase letter');
+  if (!/\d/.test(password)) issues.push('a number');
+  if (!/[^A-Za-z0-9]/.test(password)) issues.push('a symbol');
+  if (Buffer.byteLength(password, 'utf8') > MAX_PASSWORD_BYTES) issues.push(`no more than ${MAX_PASSWORD_BYTES} bytes`);
+  return issues;
+}
 
 export async function hashPassword(plaintext: string): Promise<string> {
   if (Buffer.byteLength(plaintext, 'utf8') > MAX_PASSWORD_BYTES) {

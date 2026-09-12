@@ -163,7 +163,7 @@ describe('Committee Plan import', () => {
   describe('who can import', () => {
     it('offers Import Plan to a Project Engineer, beside the exports', async () => {
       stubPlan('PROJECT_ENGINEER');
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const button = await screen.findByRole('button', { name: /Import Plan/i });
       expect(button).toBeInTheDocument();
@@ -173,7 +173,7 @@ describe('Committee Plan import', () => {
 
     it('shows a Viewer no import control at all, disabled or otherwise', async () => {
       stubPlan('VIEWER');
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.queryByRole('button', { name: /Import Plan/i })).not.toBeInTheDocument();
@@ -188,7 +188,7 @@ describe('Committee Plan import', () => {
     it('states the supported formats and that nothing imports yet', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
 
@@ -204,7 +204,7 @@ describe('Committee Plan import', () => {
       // `accept` filters the picker, but a user can choose "All files" and pick
       // a PDF anyway — which is the path this guard exists for.
       const user = userEvent.setup({ applyAccept: false });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
       const dialog = await screen.findByRole('dialog');
@@ -222,7 +222,7 @@ describe('Committee Plan import', () => {
     it('refuses an unsupported spreadsheet-adjacent format', async () => {
       stubPlan();
       const user = userEvent.setup({ applyAccept: false });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
       const dialog = await screen.findByRole('dialog');
@@ -241,7 +241,7 @@ describe('Committee Plan import', () => {
     async function openPreview(response = previewResponse()) {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
 
       const dialog = await screen.findByRole('dialog');
@@ -310,7 +310,7 @@ describe('Committee Plan import', () => {
     it('reports a rejected upload without leaking internals', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
 
       const dialog = await screen.findByRole('dialog');
@@ -333,7 +333,7 @@ describe('Committee Plan import', () => {
     it('asks for a decision when the importer would not guess', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
 
       const dialog = await screen.findByRole('dialog');
@@ -383,7 +383,7 @@ describe('Committee Plan import', () => {
     it('imports the valid rows and reports what happened', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
 
       const dialog = await screen.findByRole('dialog');
@@ -437,7 +437,7 @@ describe('Committee Plan import', () => {
       setViewportWidth(375);
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await user.click(await screen.findByRole('button', { name: /Import Plan/i }));
       const dialog = await screen.findByRole('dialog');

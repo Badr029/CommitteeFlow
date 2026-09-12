@@ -16,6 +16,7 @@ export interface PlanFilters {
   projectEngineer: string;
   onlyMine: boolean;
   includeCancelled: boolean;
+  showPastDays: boolean;
 }
 
 export interface DayOption {
@@ -36,6 +37,7 @@ export function PlanFilterSheet({
   facets,
   dayOptions,
   canFilterMine,
+  canShowPastDays,
   onApply,
   onClose,
 }: {
@@ -43,6 +45,7 @@ export function PlanFilterSheet({
   facets: BookingListResponse['facets'] | undefined;
   dayOptions: DayOption[];
   canFilterMine: boolean;
+  canShowPastDays: boolean;
   onApply: (filters: PlanFilters) => void;
   onClose: () => void;
 }) {
@@ -57,7 +60,8 @@ export function PlanFilterSheet({
     committee: '',
     status: '',
     onlyMine: false,
-    includeCancelled: false,
+    includeCancelled: true,
+    showPastDays: false,
   };
 
   return (
@@ -191,11 +195,19 @@ export function PlanFilterSheet({
             />
           )}
           <SwitchRow
-            label="Show cancelled"
-            hint="Cancelled bookings stay in the plan's history."
-            checked={draft.includeCancelled}
-            onChange={(value) => set('includeCancelled', value)}
+            label="Hide cancelled"
+            hint="Cancelled bookings are shown by default."
+            checked={!draft.includeCancelled}
+            onChange={(value) => set('includeCancelled', !value)}
           />
+          {canShowPastDays && (
+            <SwitchRow
+              label="Show past days"
+              hint="Reveal earlier dates in the current month."
+              checked={draft.showPastDays}
+              onChange={(value) => set('showPastDays', value)}
+            />
+          )}
         </div>
       </div>
     </Drawer>

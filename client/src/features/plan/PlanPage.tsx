@@ -66,7 +66,8 @@ export function PlanPage() {
   const status = params.get('status') ?? '';
   const onlyMine = params.get('mine') === '1';
   const projectEngineer = params.get('engineer') ?? '';
-  const includeCancelled = params.get('cancelled') === '1';
+  const includeCancelled = params.get('cancelled') !== '0';
+  const showPastDays = params.get('past') === '1';
   const focusedBookingId = params.get('booking');
   // A day of the month, as `YYYY-MM-DD`, or null for the whole month.
   const day = dayInMonth(params.get('day'), month);
@@ -101,6 +102,7 @@ export function PlanPage() {
           updated.set('month', next);
           updated.delete('day');
           updated.delete('session');
+          updated.delete('past');
           return updated;
         },
         { replace: true },
@@ -147,7 +149,12 @@ export function PlanPage() {
 
   const columns = useMemo(() => tableColumns(planFields.data ?? []), [planFields.data]);
   const allDays = useMemo(() => groupIntoDays(bookings.data?.bookings ?? []), [bookings.data]);
-  const days = useMemo(() => filterToDay(allDays, day), [allDays, day]);
+  const currentMonth = month === currentMonthKey();
+  const visibleDays = useMemo(
+    () => currentMonth && !showPastDays ? allDays.filter((entry) => entry.date >= today) : allDays,
+    [allDays, currentMonth, showPastDays, today],
+  );
+  const days = useMemo(() => filterToDay(visibleDays, day), [visibleDays, day]);
 
   // Drawer state. `create` carries the session an engineer chose to join.
   const [composing, setComposing] = useState<
@@ -224,7 +231,7 @@ export function PlanPage() {
           committee: committee || undefined,
           status: status || undefined,
           projectEngineer: projectEngineer || (onlyMine && user ? user.id : undefined),
-          includeCancelled: includeCancelled ? 'true' : undefined,
+          includeCancelled: includeCancelled ? 'true' : 'false',
         })}`,
         `committee-plan-${month}.${format === 'excel' ? 'xlsx' : 'pdf'}`,
       );
@@ -240,7 +247,7 @@ export function PlanPage() {
   const facets = bookings.data?.facets;
   const total = days.reduce((sum, entry) => sum + entry.bookingCount, 0);
   const sessionCount = days.reduce((sum, entry) => sum + entry.sessions.length, 0);
-  const filtered = Boolean(search || committee || status || onlyMine || projectEngineer || day);
+  const filtered = Boolean(search || committee || status || onlyMine || projectEngineer || day || !includeCancelled);
 
   /*
    * The open committee session lives in the URL like the open booking does, so
@@ -292,14 +299,17 @@ export function PlanPage() {
     ...(onlyMine
       ? [{ key: 'mine', label: 'Only my bookings', onClear: () => setParam('mine', null) }]
       : []),
-    ...(includeCancelled
+    ...(!includeCancelled
       ? [
           {
             key: 'cancelled',
-            label: 'Including cancelled',
+            label: 'Cancelled hidden',
             onClear: () => setParam('cancelled', null),
           },
         ]
+      : []),
+    ...(currentMonth && showPastDays
+      ? [{ key: 'past', label: 'Past days shown', onClear: () => setParam('past', null) }]
       : []),
   ];
 
@@ -316,7 +326,8 @@ export function PlanPage() {
         write('status', next.status);
         write('engineer', next.projectEngineer);
         write('mine', next.onlyMine ? '1' : null);
-        write('cancelled', next.includeCancelled ? '1' : null);
+        write('cancelled', next.includeCancelled ? null : '0');
+        write('past', currentMonth && next.showPastDays ? '1' : null);
         return updated;
       },
       { replace: true },
@@ -398,7 +409,7 @@ export function PlanPage() {
 
             <DaySelect
               value={day}
-              days={allDays}
+              days={visibleDays}
               onChange={(value) => setParam('day', value)}
             />
             <FacetSelect
@@ -439,13 +450,19 @@ export function PlanPage() {
               Only my bookings
             </label>
 
-            <label className={styles.toggleFilter} data-on={includeCancelled}>
+            {currentMonth && (
+              <Button variant="secondary" onClick={() => setParam('past', showPastDays ? null : '1')}>
+                {showPastDays ? 'Hide past days' : 'Show past days'}
+              </Button>
+            )}
+
+            <label className={styles.toggleFilter} data-on={!includeCancelled}>
               <input
                 type="checkbox"
-                checked={includeCancelled}
-                onChange={(event) => setParam('cancelled', event.target.checked ? '1' : null)}
+                checked={!includeCancelled}
+                onChange={(event) => setParam('cancelled', event.target.checked ? '0' : null)}
               />
-              Show cancelled
+              Hide cancelled
             </label>
 
             {canBook && (
@@ -621,13 +638,14 @@ export function PlanPage() {
 
       {filtersOpen && (
         <PlanFilterSheet
-          filters={{ day: day ?? '', committee, status, projectEngineer, onlyMine, includeCancelled }}
+          filters={{ day: day ?? '', committee, status, projectEngineer, onlyMine, includeCancelled, showPastDays }}
           facets={facets}
-          dayOptions={allDays.map((entry) => ({
+          dayOptions={visibleDays.map((entry) => ({
             date: entry.date,
             label: `${formatDayHeading(entry.date)} · ${entry.weekday}`,
           }))}
           canFilterMine={Boolean(user)}
+          canShowPastDays={currentMonth}
           onApply={applyFilters}
           onClose={() => setFiltersOpen(false)}
         />

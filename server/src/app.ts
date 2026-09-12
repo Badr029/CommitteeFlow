@@ -18,6 +18,7 @@ import { apiNotFound, errorHandler } from './middleware/error-handler.js';
 import { attachCsrfToken, verifyCsrf } from './middleware/csrf.js';
 import { buildSessionMiddleware } from './modules/auth/session.js';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { requireAuth, requirePasswordChangeComplete } from './middleware/authenticate.js';
 import { bookingsRouter } from './modules/bookings/bookings.routes.js';
 import { planFieldsRouter, settingsRouter } from './modules/plan-config/plan-config.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
@@ -176,6 +177,7 @@ function apiRouter(): Router {
   router.use(verifyCsrf);
 
   router.use('/auth', authRouter());
+  router.use(requireAuth, requirePasswordChangeComplete);
   router.use('/bookings', bookingsRouter());
   router.use('/plan-fields', planFieldsRouter());
   router.use('/settings', settingsRouter());

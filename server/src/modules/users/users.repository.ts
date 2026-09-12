@@ -12,6 +12,7 @@ export interface UserRecord {
   canManagePlanConfiguration: boolean;
   isActive: boolean;
   notifyByEmail: boolean;
+  mustChangePassword: boolean;
   externalIdentityId: string | null;
   failedLoginAttempts: number;
   lockedUntil: Date | null;
@@ -29,6 +30,7 @@ interface UserRow {
   can_manage_plan_configuration: boolean;
   is_active: boolean;
   notify_by_email: boolean;
+  must_change_password: boolean;
   external_identity_id: string | null;
   failed_login_attempts: number;
   locked_until: Date | null;
@@ -39,7 +41,7 @@ interface UserRow {
 
 const USER_COLUMNS = `
   id, name, email, password_hash, role, can_manage_plan_configuration,
-  is_active, notify_by_email, external_identity_id, failed_login_attempts,
+  is_active, notify_by_email, must_change_password, external_identity_id, failed_login_attempts,
   locked_until, last_login_at, created_at, updated_at
 `;
 
@@ -53,6 +55,7 @@ function toRecord(row: UserRow): UserRecord {
     canManagePlanConfiguration: row.can_manage_plan_configuration,
     isActive: row.is_active,
     notifyByEmail: row.notify_by_email,
+    mustChangePassword: row.must_change_password,
     externalIdentityId: row.external_identity_id,
     failedLoginAttempts: row.failed_login_attempts,
     lockedUntil: row.locked_until,
@@ -151,6 +154,7 @@ export interface CreateUserInput {
   role: UserRole;
   canManagePlanConfiguration?: boolean;
   notifyByEmail?: boolean;
+  mustChangePassword?: boolean;
 }
 
 export async function createUser(
@@ -158,8 +162,8 @@ export async function createUser(
   executor?: Queryable,
 ): Promise<UserRecord> {
   const row = await queryOne<UserRow>(
-    `INSERT INTO users (name, email, password_hash, role, can_manage_plan_configuration, notify_by_email)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO users (name, email, password_hash, role, can_manage_plan_configuration, notify_by_email, must_change_password)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING ${USER_COLUMNS}`,
     [
       input.name,
@@ -168,6 +172,7 @@ export async function createUser(
       input.role,
       input.canManagePlanConfiguration ?? false,
       input.notifyByEmail ?? true,
+      input.mustChangePassword ?? false,
     ],
     executor,
   );
@@ -178,9 +183,19 @@ export async function createUser(
 export async function setPasswordHash(
   id: string,
   passwordHash: string,
+  mustChangePassword = false,
   executor?: Queryable,
 ): Promise<void> {
-  await queryOne(`UPDATE users SET password_hash = $2 WHERE id = $1`, [id, passwordHash], executor);
+  await queryOne(
+    `UPDATE users
+        SET password_hash = $2,
+            must_change_password = $3,
+            failed_login_attempts = 0,
+            locked_until = NULL
+      WHERE id = $1`,
+    [id, passwordHash, mustChangePassword],
+    executor,
+  );
 }
 
 export async function countUsers(executor?: Queryable): Promise<number> {

@@ -1,14 +1,12 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { CalendarRange, History, LogOut, Moon, Settings2, Sun } from 'lucide-react';
+import { CalendarRange, History, Settings2 } from 'lucide-react';
 import type { SessionResponse } from '@shared/api-types';
-import { useLogout } from '@/api/queries';
 import { cn } from '@/lib/cn';
 import type { Theme } from '@/lib/theme';
 import { useViewport } from '@/lib/viewport';
 import { AccountMenu } from './AccountMenu';
 import { MobileTabBar } from './MobileTabBar';
-import { Button } from './ui/Button';
 import styles from './AppShell.module.css';
 
 /**
@@ -27,11 +25,13 @@ export function AppShell({
   session,
   theme,
   onToggleTheme,
+  onChangePassword,
   children,
 }: {
   session: SessionResponse;
   theme: Theme;
   onToggleTheme: () => void;
+  onChangePassword: () => void;
   children: ReactNode;
 }) {
   const viewport = useViewport();
@@ -44,12 +44,13 @@ export function AppShell({
       </a>
 
       {isMobile ? (
-        <MobileBar session={session} theme={theme} onToggleTheme={onToggleTheme} />
+        <MobileBar session={session} theme={theme} onToggleTheme={onToggleTheme} onChangePassword={onChangePassword} />
       ) : (
         <DesktopBar
           session={session}
           theme={theme}
           onToggleTheme={onToggleTheme}
+          onChangePassword={onChangePassword}
           compact={viewport === 'tablet'}
         />
       )}
@@ -67,10 +68,12 @@ function MobileBar({
   session,
   theme,
   onToggleTheme,
+  onChangePassword,
 }: {
   session: SessionResponse;
   theme: Theme;
   onToggleTheme: () => void;
+  onChangePassword: () => void;
 }) {
   return (
     <header className={cn(styles.bar, styles.barMobile)}>
@@ -81,7 +84,7 @@ function MobileBar({
 
       <div className={styles.spacer} />
 
-      <AccountMenu session={session} theme={theme} onToggleTheme={onToggleTheme} />
+      <AccountMenu session={session} theme={theme} onToggleTheme={onToggleTheme} onChangePassword={onChangePassword} />
     </header>
   );
 }
@@ -90,14 +93,15 @@ function DesktopBar({
   session,
   theme,
   onToggleTheme,
+  onChangePassword,
   compact,
 }: {
   session: SessionResponse;
   theme: Theme;
   onToggleTheme: () => void;
+  onChangePassword: () => void;
   compact: boolean;
 }) {
-  const logout = useLogout();
   const { user } = session;
 
   return (
@@ -125,33 +129,8 @@ function DesktopBar({
       <div className={styles.spacer} />
 
       <div className={styles.barRight}>
-        <div className={styles.identity}>
-          <span className={styles.identityName}>{user.name}</span>
-          <span className={styles.identityRole}>
-            {user.role === 'PROJECT_ENGINEER' ? 'Project Engineer' : 'Viewer'}
-          </span>
-        </div>
-
-        <span className={styles.divider} aria-hidden="true" />
-
-        <Button
-          variant="ghost"
-          iconOnly
-          icon={theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          onClick={onToggleTheme}
-          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        />
-
-        <Button
-          variant="ghost"
-          iconOnly
-          icon={<LogOut size={15} />}
-          onClick={() => logout.mutate()}
-          loading={logout.isPending}
-          aria-label="Sign out"
-          title="Sign out"
-        />
+        <AccountMenu session={session} theme={theme} onToggleTheme={onToggleTheme}
+          onChangePassword={onChangePassword} desktop />
       </div>
     </header>
   );

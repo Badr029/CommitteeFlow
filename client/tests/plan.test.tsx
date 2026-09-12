@@ -52,7 +52,7 @@ describe('Committee Plan', () => {
   describe('session grouping (spec §46, §78.1 — confirmed)', () => {
     it('groups the plan into days and shared committee sessions', async () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
 
@@ -93,7 +93,7 @@ describe('Committee Plan', () => {
   describe('dynamic columns (spec §35, §77)', () => {
     it('renders the configured labels in the configured order', async () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       const headers = screen.getAllByRole('columnheader').map((el) => el.textContent);
@@ -116,7 +116,7 @@ describe('Committee Plan', () => {
         field.fieldKey === 'customer_name' ? { ...field, label: 'Client Name' } : field,
       );
       stubPlan({ fields });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.getByRole('columnheader', { name: 'Client Name' })).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('Committee Plan', () => {
         field.fieldKey === 'kva' ? { ...field, isVisible: false } : field,
       );
       stubPlan({ fields });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.queryByRole('columnheader', { name: 'KVA' })).not.toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('Committee Plan', () => {
         fields,
         bookings: [booking({ customFields: { project_manager: 'Mohamed Ali' } })],
       });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByRole('columnheader', { name: 'Project Manager' });
       expect(screen.getByText('Mohamed Ali')).toBeInTheDocument();
@@ -166,7 +166,7 @@ describe('Committee Plan', () => {
   describe('role-based UI (spec §4, §41)', () => {
     it('offers booking controls to a Project Engineer', async () => {
       stubPlan({ role: 'PROJECT_ENGINEER' });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.getByRole('button', { name: /Book Committee Slot/ })).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe('Committee Plan', () => {
 
     it('hides every write control from a Viewer', async () => {
       stubPlan({ role: 'VIEWER' });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.queryByRole('button', { name: /Book Committee Slot/ })).not.toBeInTheDocument();
@@ -189,7 +189,7 @@ describe('Committee Plan', () => {
     it('shows the requested month and steps forwards and backwards', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.getByRole('heading', { name: 'September 2026' })).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe('Committee Plan', () => {
     it('lets a Project Engineer reach a future month', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.click(screen.getByRole('button', { name: /Oct 2026/ }));
@@ -221,7 +221,7 @@ describe('Committee Plan', () => {
     it('sends the committee filter to the server', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.selectOptions(
@@ -239,7 +239,7 @@ describe('Committee Plan', () => {
     it('treats "only my bookings" as a filter, not a page', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.click(screen.getByLabelText(/only my bookings/i));
@@ -250,17 +250,17 @@ describe('Committee Plan', () => {
       });
     });
 
-    it('asks for cancelled bookings only when requested', async () => {
+    it('shows cancelled bookings by default and can hide them', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
-      expect(api.calls.every((call) => !call.url.includes('includeCancelled'))).toBe(true);
+      expect(api.calls.some((call) => call.url.includes('includeCancelled=true'))).toBe(true);
 
-      await user.click(screen.getByLabelText(/show cancelled/i));
+      await user.click(screen.getByLabelText(/hide cancelled/i));
       await waitFor(() => {
-        expect(api.calls.some((call) => call.url.includes('includeCancelled=true'))).toBe(true);
+        expect(api.calls.at(-1)?.url).not.toContain('includeCancelled=true');
       });
     });
   });
@@ -285,7 +285,7 @@ describe('Committee Plan', () => {
     it('narrows the plan to one day of the month', async () => {
       const user = userEvent.setup();
       stubPlan({ bookings: threeDays() });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       const before = api.calls.length;
@@ -304,7 +304,7 @@ describe('Committee Plan', () => {
 
     it('offers only the days the month actually has bookings on', async () => {
       stubPlan({ bookings: threeDays() });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       const options = within(
@@ -324,7 +324,7 @@ describe('Committee Plan', () => {
     it('drops the day filter when the month changes', async () => {
       const user = userEvent.setup();
       stubPlan({ bookings: threeDays() });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.selectOptions(
@@ -345,7 +345,7 @@ describe('Committee Plan', () => {
     it('says a chosen day is free rather than falling back to the month', async () => {
       const user = userEvent.setup();
       stubPlan({ bookings: threeDays() });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.selectOptions(
@@ -359,7 +359,7 @@ describe('Committee Plan', () => {
     it('minimises a day, and says how much it is hiding', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.click(screen.getByRole('button', { name: 'Minimise 09 September' }));
@@ -375,7 +375,7 @@ describe('Committee Plan', () => {
     it('minimises one committee session without touching its neighbours', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.click(screen.getByRole('button', { name: /Minimise 09:00 North Committee/ }));
@@ -387,7 +387,7 @@ describe('Committee Plan', () => {
     it('remembers which sessions were folded when a day is reopened', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.click(screen.getByRole('button', { name: /Minimise 09:00 North Committee/ }));
@@ -411,7 +411,7 @@ describe('Committee Plan', () => {
   describe('status, serial number and ownership', () => {
     it('shows a planned booking as Planned, not as PLANNED', async () => {
       stubPlan({ bookings: [booking({ offNo: 'X1' })] });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const row = await screen.findByRole('row', { name: /Open booking X1/ });
       // The database's word is not the reader's.
@@ -423,7 +423,7 @@ describe('Committee Plan', () => {
       stubPlan({
         bookings: [booking({ offNo: 'X1', serialNo: '010662606B-020662606B' })],
       });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const row = await screen.findByRole('row', { name: /Open booking X1/ });
       expect(within(row).getByText('010662606B-020662606B')).toBeInTheDocument();
@@ -431,7 +431,7 @@ describe('Committee Plan', () => {
 
     it('names the engineer whose project it is', async () => {
       stubPlan({ bookings: [booking({ offNo: 'X1' })] });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const row = await screen.findByRole('row', { name: /Open booking X1/ });
       expect(within(row).getByText('Ahmed Hassan')).toBeInTheDocument();
@@ -439,7 +439,7 @@ describe('Committee Plan', () => {
 
     it('says so plainly when nobody owns an imported booking', async () => {
       stubPlan({ bookings: [booking({ offNo: 'X1', projectEngineer: null })] });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const row = await screen.findByRole('row', { name: /Open booking X1/ });
       // An em dash, the same as any other empty cell — not a guess at an owner.
@@ -454,7 +454,7 @@ describe('Committee Plan', () => {
           booking({ offNo: 'C1', orderName: 'Project C' }),
         ],
       });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09&cancelled=1');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const cancelled = await screen.findByRole('row', { name: /Open booking B1/ });
       expect(within(cancelled).getByText('Cancelled')).toBeInTheDocument();
@@ -468,7 +468,7 @@ describe('Committee Plan', () => {
     it('filters by the engineer a project belongs to', async () => {
       const user = userEvent.setup();
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
       await screen.findByText('Transformer 2B');
 
       await user.selectOptions(
@@ -485,7 +485,7 @@ describe('Committee Plan', () => {
   describe('states', () => {
     it('teaches the interface when the month is empty', async () => {
       stubPlan({ bookings: [] });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       expect(await screen.findByText(/No bookings in September 2026/)).toBeInTheDocument();
       expect(screen.getByText(/plan into a future month/i)).toBeInTheDocument();
@@ -493,7 +493,7 @@ describe('Committee Plan', () => {
 
     it('tells a Viewer who will fill an empty month', async () => {
       stubPlan({ role: 'VIEWER', bookings: [] });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       expect(
         await screen.findByText(/When a Project Engineer books a slot/i),
@@ -510,7 +510,7 @@ describe('Committee Plan', () => {
         });
       api.install();
 
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       expect(await screen.findByText('The plan could not be loaded')).toBeInTheDocument();
       expect(screen.getByText('The database is unreachable.')).toBeInTheDocument();
@@ -519,7 +519,7 @@ describe('Committee Plan', () => {
 
     it('renders a skeleton of the plan while loading, not a spinner', () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       expect(screen.getByLabelText('Loading the plan')).toBeInTheDocument();
       expect(screen.getByText('Loading the plan…')).toBeInTheDocument();
@@ -531,7 +531,7 @@ describe('Committee Plan', () => {
       stubPlan({
         bookings: [booking({ offNo: 'X1', status: 'CANCELLED' })],
       });
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       const row = await screen.findByRole('row', { name: /Open booking X1/ });
       expect(within(row).getByText('Cancelled')).toBeInTheDocument();

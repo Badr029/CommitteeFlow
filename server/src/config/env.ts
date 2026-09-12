@@ -62,10 +62,11 @@ const envSchema = z.object({
   SMTP_PASSWORD: optionalString,
   SMTP_FROM: z.string().default('CommitteeFlow <committeeflow@example.com>'),
   APP_PUBLIC_URL: z.string().default('http://localhost:4000'),
+  APP_TIME_ZONE: z.string().default('Africa/Cairo'),
 
   OUTBOX_WORKER_ENABLED: bool.default(true),
   OUTBOX_POLL_INTERVAL_MS: int(15_000),
-  OUTBOX_BATCH_SIZE: int(20).pipe(z.number().min(1).max(100)),
+  OUTBOX_BATCH_SIZE: int(100).pipe(z.number().min(1).max(100)),
   OUTBOX_MAX_ATTEMPTS: int(6).pipe(z.number().min(1).max(20)),
   OUTBOX_RECIPIENT_BATCH_SIZE: int(50).pipe(z.number().min(1).max(100)),
   SMTP_SEND_TIMEOUT_MS: int(30_000).pipe(z.number().min(100).max(120_000)),
@@ -73,6 +74,7 @@ const envSchema = z.object({
   OUTBOX_LEASE_SECONDS: int(120).pipe(z.number().min(1).max(600)),
   OUTBOX_AMBIGUOUS_RETRY_SECONDS: int(900).pipe(z.number().min(60).max(86400)),
   OUTBOX_PARENT_CONCURRENCY: int(2).pipe(z.number().min(1).max(5)),
+  OUTBOX_CHILD_CONCURRENCY: int(3).pipe(z.number().min(1).max(10)),
 
   CLIENT_DIST_PATH: optionalString,
 }).refine((config) => config.OUTBOX_LEASE_SECONDS * 1000 > config.SMTP_SEND_TIMEOUT_MS + 10_000,

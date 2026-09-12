@@ -23,6 +23,8 @@ export function DynamicField({
   error,
   disabled,
   autoFocus,
+  minDate,
+  minTime,
   onChange,
 }: {
   field: PlanField;
@@ -30,6 +32,8 @@ export function DynamicField({
   error?: string | undefined;
   disabled?: boolean;
   autoFocus?: boolean;
+  minDate?: string;
+  minTime?: string;
   onChange: (value: PlanFieldValue) => void;
 }) {
   // Only genuinely long values span both columns. Spanning a short field too
@@ -109,6 +113,7 @@ export function DynamicField({
                 {...common}
                 className={cn(controlClass, numericClass)}
                 type="date"
+                min={minDate}
                 value={value === null || value === undefined ? '' : String(value)}
                 onChange={(event) => onChange(event.target.value || null)}
               />
@@ -121,6 +126,7 @@ export function DynamicField({
                 {...common}
                 className={cn(controlClass, numericClass)}
                 type="time"
+                min={minTime}
                 step={300}
                 value={value === null || value === undefined ? '' : String(value)}
                 onChange={(event) => onChange(event.target.value || null)}

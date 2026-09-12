@@ -72,7 +72,7 @@ describe('Committee Plan on a phone', () => {
   describe('layout', () => {
     it('replaces the column table with the session agenda', async () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
 
@@ -85,7 +85,7 @@ describe('Committee Plan on a phone', () => {
     it('keeps the desktop table once there is width for its columns', async () => {
       setViewportWidth(1280);
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.getAllByRole('columnheader').length).toBeGreaterThan(0);
@@ -94,7 +94,7 @@ describe('Committee Plan on a phone', () => {
     it('uses the agenda on a tablet, which is still too narrow for the table', async () => {
       setViewportWidth(TABLET);
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.queryByRole('columnheader')).not.toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('Committee Plan on a phone', () => {
      */
     it('switches layout when the viewport changes, without reloading', async () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.queryByRole('columnheader')).not.toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('Committee Plan on a phone', () => {
   describe('shared committee sessions (spec §46, §78.1 — confirmed)', () => {
     it('states how many projects a session already holds', async () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
 
@@ -151,7 +151,7 @@ describe('Committee Plan on a phone', () => {
     it('opens a session showing every project in it', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       await user.click(
@@ -170,7 +170,7 @@ describe('Committee Plan on a phone', () => {
     it('prefills the schedule when adding a project to an existing session', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       await user.click(
@@ -187,7 +187,7 @@ describe('Committee Plan on a phone', () => {
     it('presents an occupied session as context, never as a conflict', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       await user.click(
@@ -205,7 +205,7 @@ describe('Committee Plan on a phone', () => {
   describe('role (spec §4, §41)', () => {
     it('gives a Project Engineer the booking action', async () => {
       stubPlan();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.getByRole('button', { name: /^Book$/ })).toBeInTheDocument();
@@ -214,7 +214,7 @@ describe('Committee Plan on a phone', () => {
     it('shows a Viewer no booking action at all, disabled or otherwise', async () => {
       stubPlan({ role: 'VIEWER' });
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
       expect(screen.queryByRole('button', { name: /^Book$/ })).not.toBeInTheDocument();
@@ -231,10 +231,10 @@ describe('Committee Plan on a phone', () => {
     it('applies filters from the sheet and shows them as removable chips', async () => {
       stubPlan();
       const user = userEvent.setup();
-      renderWithProviders(<PlanPage />, '/plan?month=2026-09');
+      renderWithProviders(<PlanPage />, '/plan?month=2026-09&past=1');
 
       await screen.findByText('Transformer 2B');
-      await user.click(screen.getByRole('button', { name: /^Filters$/i }));
+      await user.click(screen.getByRole('button', { name: /^Filters/i }));
 
       const sheet = await screen.findByRole('dialog');
       await user.selectOptions(within(sheet).getByLabelText('Committee'), 'South Committee');
@@ -250,7 +250,7 @@ describe('Committee Plan on a phone', () => {
       const chip = await screen.findByRole('button', { name: /South Committee.*Remove this filter/s });
       await user.click(chip);
       await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /Remove this filter/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /South Committee.*Remove this filter/s })).not.toBeInTheDocument();
       });
     });
   });
@@ -262,6 +262,7 @@ describe('Committee Plan on a phone', () => {
           session={session('PROJECT_ENGINEER', canManage)}
           theme="light"
           onToggleTheme={() => undefined}
+          onChangePassword={() => undefined}
         >
           <div />
         </AppShell>,

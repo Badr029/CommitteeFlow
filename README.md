@@ -185,6 +185,7 @@ Every value is **backend-only**. Nothing here is compiled into the React bundle
 | `TRUST_PROXY` | `0` | Number of proxy hops to trust. `1` behind nginx. |
 | `CORS_ORIGINS` | — | Development only; empty in production. |
 | `LOG_LEVEL` | `info` | |
+| `APP_TIME_ZONE` | `Africa/Cairo` | Business date/time boundary for booking validation and current-day views. |
 | `LOGIN_RATE_LIMIT_WINDOW_MINUTES` | `15` | |
 | `LOGIN_RATE_LIMIT_MAX_ATTEMPTS` | `10` | Also the account-lock threshold. |
 | `WRITE_RATE_LIMIT_WINDOW_MINUTES` | `1` | |
@@ -195,8 +196,11 @@ Every value is **backend-only**. Nothing here is compiled into the React bundle
 | `APP_PUBLIC_URL` | `http://localhost:4000` | Used for the deep link in notification emails. |
 | `OUTBOX_WORKER_ENABLED` | `true` | |
 | `OUTBOX_POLL_INTERVAL_MS` | `15000` | |
-| `OUTBOX_BATCH_SIZE` | `20` | |
+| `OUTBOX_BATCH_SIZE` | `100` | Maximum child attempts started by one invocation. |
 | `OUTBOX_MAX_ATTEMPTS` | `6` | Exponential backoff, then the row stays `FAILED` with its error. |
+| `OUTBOX_RECIPIENT_BATCH_SIZE` | `50` | Recipients per durable SMTP child batch. |
+| `OUTBOX_PARENT_CONCURRENCY` | `2` | Independent parent lanes per invocation. |
+| `OUTBOX_CHILD_CONCURRENCY` | `3` | Concurrent child batches per parent; defaults cap SMTP concurrency at six. |
 | `SEED_ADMIN_NAME` / `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | | `npm run seed` only. |
 | `CLIENT_DIST_PATH` | auto | Where the built SPA lives. Set in the image. |
 
@@ -629,12 +633,15 @@ A newman-runnable Postman collection covering every endpoint is in
 3. **Back up the database.** A Docker volume is persistence, not a backup
    (spec §68). Schedule `pg_dump`, keep it off the same host, and test a restore.
 4. **Run migrations as a deployment step**, before or alongside the new image.
+   For Supabase deployments, migration `1700000000008` also needs the two Vault
+   secrets documented in [`docs/supabase-outbox-wake.md`](docs/supabase-outbox-wake.md).
 5. **Rate limiting is in-process.** Fine for one app container. Behind several,
    either limit at the reverse proxy or introduce a shared store — the spec rules
    Redis out of the MVP, so this is a deliberate boundary, not an oversight.
-6. **The outbox worker runs in-process.** Multiple containers are safe
-   (`FOR UPDATE SKIP LOCKED`). Set `OUTBOX_WORKER_ENABLED=false` on all but one
-   if you would rather it did not.
+6. **The outbox worker can run in-process or through the authenticated worker
+   endpoint.** Multiple invocations are fenced by durable claims. Supabase
+   wakes the endpoint asynchronously after inserts; the existing 30-second Cron
+   remains the recovery fallback.
 7. **Watch `email_outbox`.** Rows stuck at `FAILED` with `attempt_count` at the
    maximum mean SMTP has been rejecting mail; `last_error` says why.
 8. **Health check:** `GET /api/health` → `200 {"status":"ok"}` or `503` with

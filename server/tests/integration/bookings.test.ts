@@ -41,7 +41,7 @@ describe('bookings', () => {
     it('derives the weekday from the date rather than storing it', async () => {
       const { session } = await signIn({ role: 'PROJECT_ENGINEER' });
 
-      const booking = await createBookingVia(session, { booking_date: '2026-09-10' });
+      const booking = await createBookingVia(session, { booking_date: '2026-10-01' });
 
       expect(booking.displayDay).toBe('Thursday');
       const stored = await query('SELECT * FROM bookings WHERE id = $1', [booking.id]);

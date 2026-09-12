@@ -78,6 +78,8 @@
 }
 .searchInput:hover { border-color: var(--ink-muted); }
 .searchInput:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+.searchInput::-webkit-search-cancel-button { appearance: none; display: none; }
+.searchInput::-ms-clear { display: none; }
 
 .clearSearch {
   position: absolute;

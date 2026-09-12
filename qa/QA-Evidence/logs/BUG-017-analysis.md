@@ -1,5 +1,11 @@
 # BUG-017 analysis — parent fairness after BUG-016
 
+> Historical analysis note: the one-child rotation design described below was
+> the first local correction. It was superseded on 2026-09-13 by the accepted
+> refinement: two parent lanes, three concurrent child batches per parent, and
+> an asynchronous Supabase `pg_net` wake with the 30-second Cron retained as
+> fallback. See `../../BUG-017-Retest.md` for the active design.
+
 Date: 2026-09-12
 
 ## Confirmed from source and supplied evidence

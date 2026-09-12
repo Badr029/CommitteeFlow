@@ -8,7 +8,7 @@
  * (spec §7), so further accounts are created with this script or directly in
  * the database until the business asks for more.
  */
-import { hashPassword } from '../modules/auth/password.js';
+import { hashPassword, passwordPolicyIssues } from '../modules/auth/password.js';
 import { closePool } from './pool.js';
 import * as usersRepository from '../modules/users/users.repository.js';
 import { logger } from '../lib/logger.js';
@@ -27,8 +27,9 @@ async function main(): Promise<void> {
     );
     process.exit(1);
   }
-  if (password.length < 10) {
-    console.error('SEED_ADMIN_PASSWORD must be at least 10 characters.');
+  const passwordIssues = passwordPolicyIssues(password);
+  if (passwordIssues.length > 0) {
+    console.error(`SEED_ADMIN_PASSWORD must contain ${passwordIssues.join(', ')}.`);
     process.exit(1);
   }
 
@@ -42,9 +43,10 @@ async function main(): Promise<void> {
       passwordHash: await hashPassword(password),
       role: 'PROJECT_ENGINEER',
       canManagePlanConfiguration: true,
+      mustChangePassword: true,
     });
     console.log(`Created ${user.email} — PROJECT_ENGINEER with plan configuration permission.`);
-    console.log('Change this password after the first sign-in.');
+    console.log('This temporary password must be replaced at first sign-in.');
   }
 
   if (process.argv.includes(DEMO_FLAG)) {
@@ -82,6 +84,7 @@ async function seedDemoUsers(password: string): Promise<void> {
     await usersRepository.createUser({
       ...candidate,
       passwordHash: await hashPassword(password),
+      mustChangePassword: true,
     });
     console.log(`Created ${candidate.email} — ${candidate.role} (same password).`);
   }

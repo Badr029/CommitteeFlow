@@ -20,6 +20,8 @@ import {
 } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 import { addMonths, endOfMonth, isAfter, startOfMonth, today } from '../../lib/dates.js';
+import { zonedDateTime } from '../../lib/dates.js';
+import { env } from '../../config/env.js';
 import type { UserRecord } from '../users/users.repository.js';
 import * as usersRepository from '../users/users.repository.js';
 import { getSettings } from '../plan-config/settings.service.js';
@@ -341,6 +343,16 @@ async function assertDateWithinHorizon(bookingDate: string): Promise<void> {
   }
 }
 
+function assertNotInPast(bookingDate: string, bookingTime: string): void {
+  const now = zonedDateTime(env().APP_TIME_ZONE);
+  if (bookingDate < now.date || (bookingDate === now.date && bookingTime.slice(0, 5) < now.time)) {
+    throw validationFailed([
+      { field: 'booking_date', message: 'Choose a date and time that has not passed.' },
+      { field: 'booking_time', message: 'Choose a date and time that has not passed.' },
+    ]);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Writes
 // ---------------------------------------------------------------------------
@@ -388,6 +400,7 @@ export async function createBooking(
   const activeFields = await planFields.listActive();
   const normalized = normalizeValues(input.values, activeFields, 'create');
   const { bookingDate, bookingTime } = requireDateAndTime(normalized.flat);
+  assertNotInPast(bookingDate, bookingTime);
   await assertDateWithinHorizon(bookingDate);
 
   const settings = await getSettings();
@@ -492,6 +505,9 @@ export async function updateBooking(
 
     if (diff.changedKeys.includes('booking_date')) {
       await assertDateWithinHorizon(bookingDate);
+    }
+    if (diff.changedKeys.some((key) => key === 'booking_date' || key === 'booking_time')) {
+      assertNotInPast(bookingDate, bookingTime);
     }
 
     // Re-check exclusivity whenever any part of the slot key moved.

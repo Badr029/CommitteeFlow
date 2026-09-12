@@ -75,6 +75,17 @@ export function today(now: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Calendar date/time in the configured business timezone. */
+export function zonedDateTime(timeZone: string, now: Date = new Date()): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? '';
+  return { date: `${value('year')}-${value('month')}-${value('day')}`, time: `${value('hour')}:${value('minute')}` };
+}
+
 /**
  * Adds whole months to a date, clamping the day to the target month's length
  * (2026-01-31 + 1 month is 2026-02-28, not 2026-03-03).

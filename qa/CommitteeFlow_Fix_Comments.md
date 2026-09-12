@@ -396,25 +396,23 @@ marking it portfolio-verified from this repository alone.
 
 ---
 
-## BUG-017 — local correction prepared; deployed retest pending
+## BUG-017 — refined local correction prepared; deployed retest pending
 
 ```
-fix: rotate durable outbox parents fairly without breaking booking event order
+fix: drain independent outbox parents with bounded child concurrency
 
-* Each successful child batch is one scheduling quantum. An unfinished parent
-  is returned behind older eligible parents rather than monopolising successive
-  claims.
-* Two bounded lanes per invocation allow independent booking scopes to progress.
+* Two bounded parent lanes allow independent booking scopes to progress.
+* Each parent drains durable child batches in waves of three while retaining its
+  lease; default total SMTP concurrency is bounded at six per invocation.
 * A lower-ID unfinished event blocks later events for the same booking; NULL
   booking events use one conservative plan-wide ordering scope.
 * Existing leases, persistent child batches, retry counters, stable Message-IDs,
   partial-acceptance handling and acknowledgement fencing are preserved.
-* Safe structured logs now expose lane, parent, child, queue wait, SMTP duration,
-  remaining budget, outcome and stop reason without addresses or message data.
+* Supabase pg_net wakes the authenticated worker asynchronously after enqueue;
+  the existing 30-second Cron remains the fallback.
 
 Local retest: the pre-fix test failed with independent B after A's final batch.
-After the change, 45 focused tests passed; the complete suites passed 335 server
-tests and 83 client tests with four pre-existing skips. Typecheck, lint,
-production build, migration compatibility, Compose configuration and diff check
-passed. No deployment or external SMTP retest was performed.
+After the refined change, the complete suites passed 338 server tests and 86
+client tests with four pre-existing skips. No deployment or external SMTP retest
+was performed.
 ```

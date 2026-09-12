@@ -62,6 +62,51 @@ describe('authentication and session security', () => {
     expect(JSON.stringify(res.body)).not.toContain('$argon2');
   });
 
+  it('blocks a temporary-password account until it replaces the password', async () => {
+    const user = await createUser({
+      role: 'PROJECT_ENGINEER',
+      canManagePlanConfiguration: true,
+      mustChangePassword: true,
+    });
+    const session = new Session();
+    const login = await session.login(user.email);
+
+    expect(login.body.user.mustChangePassword).toBe(true);
+    expect((await session.get('/api/auth/session')).status).toBe(200);
+    const blocked = await session.get('/api/bookings?month=2026-10');
+    expect(blocked.status).toBe(403);
+    expect(blocked.body.error.message).toMatch(/temporary password/i);
+
+    const changed = await session.post('/api/auth/change-password', {
+      currentPassword: TEST_PASSWORD,
+      newPassword: 'PrivatePassword!2026',
+    });
+    expect(changed.status).toBe(200);
+    expect(changed.body.user.mustChangePassword).toBe(false);
+    expect((await session.get('/api/bookings?month=2026-10')).status).toBe(200);
+  });
+
+  it('enforces current-password verification and the complete password policy', async () => {
+    const user = await createUser({ role: 'VIEWER', mustChangePassword: true });
+    const session = new Session();
+    await session.login(user.email);
+
+    const wrongCurrent = await session.post('/api/auth/change-password', {
+      currentPassword: 'WrongPassword!2026',
+      newPassword: 'PrivatePassword!2026',
+    });
+    expect(wrongCurrent.status).toBe(422);
+    expect(wrongCurrent.body.error.issues[0].field).toBe('currentPassword');
+
+    const weak = await session.post('/api/auth/change-password', {
+      currentPassword: TEST_PASSWORD,
+      newPassword: 'onlylowercase',
+    });
+    expect(weak.status).toBe(422);
+    expect(weak.body.error.issues[0].field).toBe('newPassword');
+    expect((await session.get('/api/bookings?month=2026-10')).status).toBe(403);
+  });
+
   it('sets an HttpOnly, SameSite session cookie', async () => {
     const user = await createUser({ role: 'VIEWER' });
     const session = new Session();

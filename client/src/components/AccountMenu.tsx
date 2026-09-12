@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LogOut, Moon, Sun, UserRound, X } from 'lucide-react';
+import { KeyRound, LogOut, Moon, Sun, UserRound, X } from 'lucide-react';
 import type { SessionResponse } from '@shared/api-types';
 import { useLogout } from '@/api/queries';
 import type { Theme } from '@/lib/theme';
@@ -18,10 +18,14 @@ export function AccountMenu({
   session,
   theme,
   onToggleTheme,
+  onChangePassword,
+  desktop = false,
 }: {
   session: SessionResponse;
   theme: Theme;
   onToggleTheme: () => void;
+  onChangePassword: () => void;
+  desktop?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const logout = useLogout();
@@ -58,19 +62,24 @@ export function AccountMenu({
       <button
         ref={triggerRef}
         type="button"
-        className={styles.accountTrigger}
+        className={desktop ? styles.desktopAccountTrigger : styles.accountTrigger}
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={`Account: ${user.name}`}
         onClick={() => setOpen((current) => !current)}
       >
-        <UserRound size={18} strokeWidth={1.9} />
+        {desktop ? (
+          <span className={styles.identity}>
+            <span className={styles.identityName}>{user.name}</span>
+            <span className={styles.identityRole}>{user.role === 'PROJECT_ENGINEER' ? 'Project Engineer' : 'Viewer'}</span>
+          </span>
+        ) : <UserRound size={18} strokeWidth={1.9} />}
       </button>
 
       {open && (
         <>
           <div className={styles.accountScrim} aria-hidden="true" />
-          <div ref={panelRef} className={styles.accountPanel} role="menu">
+          <div ref={panelRef} className={desktop ? `${styles.accountPanel} ${styles.accountPanelDesktop}` : styles.accountPanel} role="menu">
             <div className={styles.accountIdentity}>
               <span className={styles.accountName}>{user.name}</span>
               <span className={styles.accountRole}>
@@ -78,6 +87,12 @@ export function AccountMenu({
               </span>
               <span className={styles.accountEmail}>{user.email}</span>
             </div>
+
+            <button type="button" role="menuitem" className={styles.accountItem}
+              onClick={() => { onChangePassword(); setOpen(false); }}>
+              <KeyRound size={16} />
+              Change password
+            </button>
 
             <button
               type="button"

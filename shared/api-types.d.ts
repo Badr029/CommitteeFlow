@@ -20,6 +20,8 @@ export interface CurrentUser {
   role: UserRole;
   canManagePlanConfiguration: boolean;
   notifyByEmail: boolean;
+  /** A temporary script-issued password must be replaced before app access. */
+  mustChangePassword: boolean;
   /** Everything this session is allowed to do, resolved on the server. */
   permissions: UserPermissions;
 }
@@ -442,6 +444,11 @@ export interface ApiErrorBody {
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface SessionResponse {

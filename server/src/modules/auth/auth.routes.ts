@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { SessionResponse } from '@shared/api-types.js';
+import type { ChangePasswordRequest, SessionResponse } from '@shared/api-types.js';
 import { asyncHandler, parseBody } from '../../lib/http.js';
-import { unauthenticated } from '../../lib/errors.js';
+import { unauthenticated, validationFailed } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 import { env } from '../../config/env.js';
 import { requireAuth, toCurrentUser } from '../../middleware/authenticate.js';
@@ -10,12 +10,17 @@ import { CSRF_COOKIE, issueCsrfCookie } from '../../middleware/csrf.js';
 import { loginRateLimiter } from '../../middleware/rate-limit.js';
 import { getSettings } from '../plan-config/settings.service.js';
 import * as usersRepository from '../users/users.repository.js';
-import { fakeVerify, verifyPassword } from './password.js';
+import { fakeVerify, hashPassword, passwordPolicyIssues, verifyPassword } from './password.js';
 import { destroySession, generateCsrfToken, regenerateSession, saveSession } from './session.js';
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, 'Enter your email address.').max(320),
   password: z.string().min(1, 'Enter your password.').max(256),
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Enter your current password.').max(256),
+  newPassword: z.string().min(1, 'Enter a new password.').max(256),
 });
 
 /** How long an account stays locked after too many failed attempts. */
@@ -107,6 +112,56 @@ export function authRouter(): Router {
         csrfToken: req.session.csrfToken,
       };
       res.json(body);
+    }),
+  );
+
+  router.post(
+    '/change-password',
+    requireAuth,
+    asyncHandler(async (req, res) => {
+      const input: ChangePasswordRequest = parseBody(changePasswordSchema, req.body);
+      const user = req.user!;
+      const valid = user.passwordHash && await verifyPassword(user.passwordHash, input.currentPassword);
+      if (!valid) {
+        throw validationFailed(
+          [{ field: 'currentPassword', message: 'Your current password is not correct.' }],
+          'Check your current password.',
+        );
+      }
+
+      const policy = passwordPolicyIssues(input.newPassword);
+      if (policy.length > 0) {
+        throw validationFailed(
+          [{ field: 'newPassword', message: `Use ${policy.join(', ')}.` }],
+          'The new password does not meet the password rules.',
+        );
+      }
+      if (await verifyPassword(user.passwordHash!, input.newPassword)) {
+        throw validationFailed(
+          [{ field: 'newPassword', message: 'Choose a password different from your current password.' }],
+          'Choose a different password.',
+        );
+      }
+
+      await usersRepository.setPasswordHash(user.id, await hashPassword(input.newPassword), false);
+      const refreshed = await usersRepository.findById(user.id);
+      if (!refreshed) throw unauthenticated();
+
+      await regenerateSession(req);
+      req.session.userId = refreshed.id;
+      req.session.role = refreshed.role;
+      req.session.loggedInAt = new Date().toISOString();
+      req.session.csrfToken = generateCsrfToken();
+      await saveSession(req);
+      issueCsrfCookie(res, req.session.csrfToken);
+
+      logger.info({ userId: refreshed.id }, 'password changed');
+      const body: SessionResponse = {
+        user: toCurrentUser(refreshed),
+        settings: await getSettings(),
+        csrfToken: req.session.csrfToken,
+      };
+      res.status(200).json(body);
     }),
   );
 

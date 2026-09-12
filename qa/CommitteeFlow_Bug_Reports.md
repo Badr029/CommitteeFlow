@@ -673,4 +673,8 @@ Actual Result
   none is claimed as the confirmed cause.
 
 The local fix and exact deployment/retest procedure are in
-[`BUG-017-Retest.md`](BUG-017-Retest.md).
+[`BUG-017-Retest.md`](BUG-017-Retest.md). The refined scheduler holds two
+independent parents and drains each in three-child waves, with a default maximum
+of six concurrent SMTP sends per invocation. Migration `1700000000008` adds an
+asynchronous Supabase `pg_net` wake; the existing 30-second Cron remains the
+recovery fallback.

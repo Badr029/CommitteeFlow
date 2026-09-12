@@ -114,6 +114,7 @@ export async function createUser(options: {
   canManagePlanConfiguration?: boolean;
   isActive?: boolean;
   notifyByEmail?: boolean;
+  mustChangePassword?: boolean;
 }): Promise<CreatedUser> {
   userCounter += 1;
   const email = options.email ?? `user${userCounter}@committeeflow.test`;
@@ -126,6 +127,7 @@ export async function createUser(options: {
     role: options.role,
     canManagePlanConfiguration: options.canManagePlanConfiguration ?? false,
     notifyByEmail: options.notifyByEmail ?? true,
+    mustChangePassword: options.mustChangePassword ?? false,
   });
 
   if (options.isActive === false) {

@@ -80,11 +80,12 @@ describe('BUG-016 durable delivery', () => {
       .mockRejectedValueOnce(Object.assign(new Error('private SMTP detail'), { responseCode: 451 }));
     expect(await processOutboxBatch()).toEqual({ sent: 0, failed: 1 });
     const retryId = send.mock.calls[1]?.[0].messageId;
-    expect(mailer.sent).toHaveLength(1);
+    // The two successful siblings commit; only the rejected child is retried.
+    expect(mailer.sent).toHaveLength(2);
     await query("UPDATE email_outbox SET next_attempt_at = now() - interval '1 second'");
     expect(await processOutboxBatch()).toEqual({ sent: 1, failed: 0 });
     expect(mailer.sent).toHaveLength(3);
-    expect(mailer.sent[1]?.messageId).toBe(retryId);
+    expect(mailer.sent[2]?.messageId).toBe(retryId);
     expect((await query('SELECT attempt_count FROM email_outbox_batches ORDER BY batch_no')).rows)
       .toEqual([{ attempt_count: 1 }, { attempt_count: 2 }, { attempt_count: 1 }]);
   });
@@ -182,9 +183,9 @@ describe('BUG-016 durable delivery', () => {
     expect((await query('SELECT last_error FROM email_outbox')).rows[0]?.last_error).toBe('DELIVERY_UNKNOWN');
   });
 
-  it('releases between batches when the invocation budget runs low and resumes safely', async () => {
+  it('releases after a child wave when the invocation budget runs low and resumes safely', async () => {
     const mailer = useRecordingMailer();
-    await enqueue(51);
+    await enqueue(201);
     let elapsed = 0;
     vi.spyOn(performance, 'now').mockImplementation(() => elapsed);
     const original = mailer.send.bind(mailer);
@@ -192,10 +193,10 @@ describe('BUG-016 durable delivery', () => {
       await original(email); elapsed = 20_000;
     });
     expect(await processOutboxBatch()).toEqual({ sent: 0, failed: 0 });
-    expect(mailer.sent).toHaveLength(1);
+    expect(mailer.sent).toHaveLength(3);
     expect((await query('SELECT claim_token FROM email_outbox')).rows[0]?.claim_token).toBeNull();
     expect(await processOutboxBatch()).toEqual({ sent: 1, failed: 0 });
-    expect(mailer.sent).toHaveLength(2);
+    expect(mailer.sent).toHaveLength(5);
   });
 });
 
@@ -203,7 +204,38 @@ describe('BUG-017 outbox fairness', () => {
   beforeEach(resetDatabase);
   afterAll(closePool);
 
-  it('allows an independent parent to progress before a large parent completes', async () => {
+  it('runs one parent child batches up to the configured child limit', async () => {
+    const booking = await createBookingScope('CHILD-BOUND');
+    await enqueueBooking(booking, 'BOOKING_CREATED', 201);
+    let active = 0;
+    let maximumActive = 0;
+    let started = 0;
+    let release!: () => void;
+    let waveReady!: () => void;
+    const blocked = new Promise<void>((resolve) => { release = resolve; });
+    const firstWave = new Promise<void>((resolve) => { waveReady = resolve; });
+    setMailer({ mode: 'smtp', verify: async () => true, close: async () => {},
+      send: async (email) => {
+        active++;
+        started++;
+        maximumActive = Math.max(maximumActive, active);
+        if (started === 3) waveReady();
+        await blocked;
+        active--;
+        return { accepted: email.to };
+      } });
+
+    const run = processOutboxBatch();
+    await firstWave;
+    expect(started).toBe(3);
+    expect(maximumActive).toBe(3);
+    release();
+    expect(await run).toEqual({ sent: 1, failed: 0 });
+    expect(started).toBe(5);
+    expect(maximumActive).toBe(3);
+  });
+
+  it('completes an independent parent in the same invocation as a large parent', async () => {
     const mailer = useRecordingMailer();
     const bookingA = await createBookingScope('FAIR-A');
     const bookingB = await createBookingScope('FAIR-B');
@@ -212,14 +244,14 @@ describe('BUG-017 outbox fairness', () => {
     const parents = (await query<{ delivery_key: string }>(
       'SELECT delivery_key FROM email_outbox ORDER BY id')).rows;
 
-    await processOutboxBatch();
+    expect(await processOutboxBatch()).toEqual({ sent: 2, failed: 0 });
 
     const order = mailer.sent.map((message) => message.messageId);
-    expect(order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`))
-      .toBeLessThan(order.indexOf(`<${parents[0]!.delivery_key}.2@notifications.committeeflow.invalid>`));
+    expect(order).toContain(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`);
+    expect(order.filter((id) => id.includes(parents[0]!.delivery_key))).toHaveLength(3);
   });
 
-  it('advances three independent parents in fair rounds', async () => {
+  it('drains three independent parents under bounded parent lanes', async () => {
     const mailer = useRecordingMailer();
     const bookings = await Promise.all(['ROUND-A', 'ROUND-B', 'ROUND-C'].map(createBookingScope));
     await enqueueBooking(bookings[0]!, 'BOOKING_CREATED', 101);
@@ -231,12 +263,9 @@ describe('BUG-017 outbox fairness', () => {
     expect(await processOutboxBatch()).toEqual({ sent: 3, failed: 0 });
 
     const order = mailer.sent.map((message) => message.messageId);
-    const finalLargeBatch = order.indexOf(
-      `<${parents[0]!.delivery_key}.2@notifications.committeeflow.invalid>`);
-    expect(order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`))
-      .toBeLessThan(finalLargeBatch);
-    expect(order.indexOf(`<${parents[2]!.delivery_key}.0@notifications.committeeflow.invalid>`))
-      .toBeLessThan(finalLargeBatch);
+    expect(order.filter((id) => id.includes(parents[0]!.delivery_key))).toHaveLength(3);
+    expect(order.filter((id) => id.includes(parents[1]!.delivery_key))).toHaveLength(2);
+    expect(order.filter((id) => id.includes(parents[2]!.delivery_key))).toHaveLength(1);
   });
 
   it('preserves same-booking lifecycle order while another booking progresses', async () => {
@@ -257,7 +286,7 @@ describe('BUG-017 outbox fairness', () => {
     const updated = order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`);
     const cancelled = order.indexOf(`<${parents[2]!.delivery_key}.0@notifications.committeeflow.invalid>`);
     const independent = order.indexOf(`<${parents[3]!.delivery_key}.0@notifications.committeeflow.invalid>`);
-    expect(independent).toBeLessThan(createdDone);
+    expect(independent).toBeLessThan(updated);
     expect(createdDone).toBeLessThan(updated);
     expect(updated).toBeLessThan(cancelled);
   });
@@ -347,34 +376,34 @@ describe('BUG-017 outbox fairness', () => {
     expect(await run).toEqual({ sent: 2, failed: 0 });
   });
 
-  it('bounds slow SMTP work to the configured parent concurrency', async () => {
+  it('bounds total SMTP work to parent times child concurrency and lets parent C follow', async () => {
     const bookings = await Promise.all(['SLOW-A', 'SLOW-B', 'SLOW-C'].map(createBookingScope));
-    for (const booking of bookings) await enqueueBooking(booking, 'BOOKING_CREATED', 1);
+    for (const booking of bookings) await enqueueBooking(booking, 'BOOKING_CREATED', 201);
     let active = 0;
     let maximumActive = 0;
     let started = 0;
     let release!: () => void;
     let firstWave!: () => void;
     const blocked = new Promise<void>((resolve) => { release = resolve; });
-    const twoStarted = new Promise<void>((resolve) => { firstWave = resolve; });
+    const sixStarted = new Promise<void>((resolve) => { firstWave = resolve; });
     setMailer({ mode: 'smtp', verify: async () => true, close: async () => {},
       send: async (email) => {
         active++;
         started++;
         maximumActive = Math.max(maximumActive, active);
-        if (started === 2) firstWave();
+        if (started === 6) firstWave();
         await blocked;
         active--;
         return { accepted: email.to };
       } });
 
     const run = processOutboxBatch();
-    await twoStarted;
-    expect(started).toBe(2);
-    expect(maximumActive).toBe(2);
+    await sixStarted;
+    expect(started).toBe(6);
+    expect(maximumActive).toBe(6);
     release();
     expect(await run).toEqual({ sent: 3, failed: 0 });
-    expect(started).toBe(3);
-    expect(maximumActive).toBe(2);
+    expect(started).toBe(15);
+    expect(maximumActive).toBe(6);
   });
 });

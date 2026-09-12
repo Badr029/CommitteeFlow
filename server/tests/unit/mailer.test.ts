@@ -97,7 +97,11 @@ describe('BUG-016 SMTP protocol', () => {
     expect(() => parseEnvFrom({ ...base, OUTBOX_RECIPIENT_BATCH_SIZE: '0' })).toThrow();
     expect(() => parseEnvFrom({ ...base, OUTBOX_PARENT_CONCURRENCY: '0' })).toThrow();
     expect(() => parseEnvFrom({ ...base, OUTBOX_PARENT_CONCURRENCY: '6' })).toThrow();
+    expect(() => parseEnvFrom({ ...base, OUTBOX_CHILD_CONCURRENCY: '0' })).toThrow();
+    expect(() => parseEnvFrom({ ...base, OUTBOX_CHILD_CONCURRENCY: '11' })).toThrow();
     expect(parseEnvFrom(base).OUTBOX_RECIPIENT_BATCH_SIZE).toBe(50);
     expect(parseEnvFrom(base).OUTBOX_PARENT_CONCURRENCY).toBe(2);
+    expect(parseEnvFrom(base).OUTBOX_CHILD_CONCURRENCY).toBe(3);
+    expect(parseEnvFrom(base).OUTBOX_BATCH_SIZE).toBe(100);
   });
 });

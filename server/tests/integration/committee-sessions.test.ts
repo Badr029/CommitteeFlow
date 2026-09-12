@@ -220,12 +220,15 @@ describe('shared committee sessions', () => {
       expect(res.body.error.issues[0].message).toMatch(/6 months ahead/);
     });
 
-    it('still allows a booking in a past month, so history can be corrected', async () => {
+    it('rejects a new booking in a past month', async () => {
       const { session } = await signIn({ role: 'PROJECT_ENGINEER' });
 
       const res = await session.post('/api/bookings', bookingPayload({ booking_date: '2020-05-04' }));
 
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(422);
+      expect(res.body.error.issues).toEqual(expect.arrayContaining([
+        expect.objectContaining({ field: 'booking_date', message: expect.stringMatching(/has not passed/) }),
+      ]));
     });
   });
 });

@@ -84,6 +84,18 @@ export function useLogin() {
   });
 }
 
+export function useChangePassword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { currentPassword: string; newPassword: string }) =>
+      api.post<SessionResponse>('/api/auth/change-password', input),
+    onSuccess: (session) => {
+      queryClient.setQueryData(keys.session, session);
+      void queryClient.invalidateQueries();
+    },
+  });
+}
+
 export function useLogout() {
   const queryClient = useQueryClient();
   return useMutation({
