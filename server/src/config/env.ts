@@ -65,11 +65,19 @@ const envSchema = z.object({
 
   OUTBOX_WORKER_ENABLED: bool.default(true),
   OUTBOX_POLL_INTERVAL_MS: int(15_000),
-  OUTBOX_BATCH_SIZE: int(20),
-  OUTBOX_MAX_ATTEMPTS: int(6),
+  OUTBOX_BATCH_SIZE: int(20).pipe(z.number().min(1).max(100)),
+  OUTBOX_MAX_ATTEMPTS: int(6).pipe(z.number().min(1).max(20)),
+  OUTBOX_RECIPIENT_BATCH_SIZE: int(50).pipe(z.number().min(1).max(100)),
+  SMTP_SEND_TIMEOUT_MS: int(30_000).pipe(z.number().min(100).max(120_000)),
+  OUTBOX_RUN_BUDGET_MS: int(50_000).pipe(z.number().min(1000).max(240_000)),
+  OUTBOX_LEASE_SECONDS: int(120).pipe(z.number().min(1).max(600)),
+  OUTBOX_AMBIGUOUS_RETRY_SECONDS: int(900).pipe(z.number().min(60).max(86400)),
 
   CLIENT_DIST_PATH: optionalString,
-});
+}).refine((config) => config.OUTBOX_LEASE_SECONDS * 1000 > config.SMTP_SEND_TIMEOUT_MS + 10_000,
+  { message: 'OUTBOX_LEASE_SECONDS must exceed SMTP_SEND_TIMEOUT_MS by more than 10 seconds' })
+  .refine((config) => config.OUTBOX_RUN_BUDGET_MS > config.SMTP_SEND_TIMEOUT_MS + 5_000,
+    { message: 'OUTBOX_RUN_BUDGET_MS must exceed SMTP_SEND_TIMEOUT_MS by more than 5 seconds' });
 
 export type AppEnv = z.infer<typeof envSchema>;
 

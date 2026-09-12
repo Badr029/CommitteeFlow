@@ -83,7 +83,7 @@ async function main(): Promise<void> {
  * app containers starting at once cannot race each other.
  */
 async function assertSchemaIsMigrated(): Promise<void> {
-  const required = ['users', 'bookings', 'plan_field_definitions', 'session', 'email_outbox'];
+  const required = ['users', 'bookings', 'plan_field_definitions', 'session', 'email_outbox', 'email_outbox_batches'];
 
   const { rows } = await getPool().query<{ table_name: string }>(
     `SELECT table_name

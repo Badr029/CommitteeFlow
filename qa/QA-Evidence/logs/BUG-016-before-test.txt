@@ -1,0 +1,45 @@
+
+> @committeeflow/server@0.1.0 test
+> vitest run tests/integration/outbox-delivery.test.ts
+
+
+ RUN  v3.2.7 D:/Projects/PROJECTS 2.0/Committe MS/CommitteeFlow/server
+
+ ❯ tests/integration/outbox-delivery.test.ts (1 test | 1 failed) 164ms
+   × BUG-016 durable delivery > competing workers cannot send a row already being transmitted 162ms
+     → expected [ { to: [ …(2) ], …(3) }, …(1) ] to have a length of 1 but got 2
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/outbox-delivery.test.ts > BUG-016 durable delivery > competing workers cannot send a row already being transmitted
+AssertionError: expected [ { to: [ …(2) ], …(3) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/integration/outbox-delivery.test.ts:39:25
+     37|     } finally { release(); }
+     38|     await first;
+     39|     expect(mailer.sent).toHaveLength(1);
+       |                         ^
+     40|   });
+     41| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:04:26
+   Duration  17.91s (transform 1.77s, setup 7ms, collect 14.46s, tests 164ms, environment 0ms, prepare 619ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path D:\Projects\PROJECTS 2.0\Committe MS\CommitteeFlow\server
+npm error workspace @committeeflow/server@0.1.0
+npm error location D:\Projects\PROJECTS 2.0\Committe MS\CommitteeFlow\server
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vitest run tests/integration/outbox-delivery.test.ts

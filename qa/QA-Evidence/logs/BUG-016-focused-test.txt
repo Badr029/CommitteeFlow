@@ -1,0 +1,62 @@
+
+> @committeeflow/server@0.1.0 test
+> vitest run tests/integration/outbox-delivery.test.ts tests/integration/audit-notifications.test.ts
+
+
+ RUN  v3.2.7 D:/Projects/PROJECTS 2.0/Committe MS/CommitteeFlow/server
+
+ ✓ tests/integration/outbox-delivery.test.ts (1 test) 176ms
+ ❯ tests/integration/audit-notifications.test.ts (20 tests | 1 failed) 5130ms
+   ✓ audit trail and notifications > booking history (spec §13) > answers who created it and when  633ms
+   ✓ audit trail and notifications > booking history (spec §13) > answers what changed, from what, to what 282ms
+   ✓ audit trail and notifications > booking history (spec §13) > answers who cancelled it 293ms
+   ✓ audit trail and notifications > booking history (spec §13) > keeps history readable after the field is renamed  307ms
+   ✓ audit trail and notifications > booking history (spec §13) > is readable by a viewer 273ms
+   ✓ audit trail and notifications > booking history (spec §13) > exposes no endpoint that modifies or deletes history (spec §67) 219ms
+   ✓ audit trail and notifications > activity feed (spec §14, §56) > returns newest first with booking context 217ms
+   ✓ audit trail and notifications > activity feed (spec §14, §56) > paginates rather than returning everything  319ms
+   ✓ audit trail and notifications > activity feed (spec §14, §56) > caps the page size a client can ask for 166ms
+   ✓ audit trail and notifications > activity feed (spec §14, §56) > can be filtered to one booking 188ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > queues a message for create, update and cancel — not only create 261ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > does not block the booking response on delivery 166ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > delivers to every active user who has not opted out  328ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > honours the ENGINEERS_ONLY audience setting 251ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > says what changed and links to the live plan, with no attachment 265ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > escapes user-supplied text in the HTML body 189ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > marks a message sent and does not resend it 191ms
+   × audit trail and notifications > email outbox (spec §16, §50, §51) > records the failure and schedules a retry when SMTP fails 181ms
+     → expected 'DELIVERY_UNKNOWN' to contain 'simulated SMTP failure'
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > delivers a previously failed message once it is due again 231ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > does not queue anything when nothing changed 166ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/audit-notifications.test.ts > audit trail and notifications > email outbox (spec §16, §50, §51) > records the failure and schedules a retry when SMTP fails
+AssertionError: expected 'DELIVERY_UNKNOWN' to contain 'simulated SMTP failure'
+
+Expected: "simulated SMTP failure"
+Received: "DELIVERY_UNKNOWN"
+
+ ❯ tests/integration/audit-notifications.test.ts:311:39
+    309|       expect(row.rows[0]?.status).toBe('FAILED');
+    310|       expect(row.rows[0]?.attempt_count).toBe(1);
+    311|       expect(row.rows[0]?.last_error).toContain('simulated SMTP failur…
+       |                                       ^
+    312|       expect(row.rows[0]?.next_attempt_at.getTime()).toBeGreaterThan(D…
+    313| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 20 passed (21)
+   Start at  16:08:51
+   Duration  8.59s (transform 406ms, setup 9ms, collect 2.21s, tests 5.31s, environment 0ms, prepare 168ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path D:\Projects\PROJECTS 2.0\Committe MS\CommitteeFlow\server
+npm error workspace @committeeflow/server@0.1.0
+npm error location D:\Projects\PROJECTS 2.0\Committe MS\CommitteeFlow\server
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vitest run tests/integration/outbox-delivery.test.ts tests/integration/audit-notifications.test.ts

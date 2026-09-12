@@ -1,0 +1,55 @@
+
+> @committeeflow/server@0.1.0 test
+> vitest run tests/integration/outbox-delivery.test.ts tests/integration/audit-notifications.test.ts tests/unit/mailer.test.ts
+
+
+ RUN  v3.2.7 D:/Projects/PROJECTS 2.0/Committe MS/CommitteeFlow/server
+
+ ✓ tests/integration/audit-notifications.test.ts (20 tests) 4850ms
+   ✓ audit trail and notifications > booking history (spec §13) > answers who created it and when  424ms
+   ✓ audit trail and notifications > booking history (spec §13) > answers who cancelled it  326ms
+   ✓ audit trail and notifications > booking history (spec §13) > keeps history readable after the field is renamed  332ms
+   ✓ audit trail and notifications > activity feed (spec §14, §56) > paginates rather than returning everything  318ms
+   ✓ audit trail and notifications > email outbox (spec §16, §50, §51) > delivers to every active user who has not opted out  306ms
+ ❯ tests/integration/outbox-delivery.test.ts (8 tests | 1 failed) 1291ms
+   ✓ BUG-016 durable delivery > competing workers cannot send a row already being transmitted 179ms
+   ✓ BUG-016 durable delivery > delivers 530 recipients in 11 persistent batches and never reprocesses SENT work 257ms
+   ✓ BUG-016 durable delivery > retries a failed batch without repeating an earlier successful batch 152ms
+   ✓ BUG-016 durable delivery > persists partial SMTP acceptance and retries only rejected recipients 113ms
+   ✓ BUG-016 durable delivery > records ambiguous acceptance, delays retries, and stops at the attempt limit 268ms
+   ✓ BUG-016 durable delivery > recovers expired in-flight work as ambiguous and fences the old worker 101ms
+   ✓ BUG-016 durable delivery > does not lose successful batches when a worker crashes before its next send 127ms
+   × BUG-016 durable delivery > retains legacy SENT rows and initializes legacy pending rows only once 92ms
+     → new row for relation "email_outbox" violates check constraint "email_outbox_lease_pair"
+ ✓ tests/unit/mailer.test.ts (6 tests) 1091ms
+   ✓ BUG-016 SMTP protocol > closes SMTP at the absolute deadline after acceptance without acknowledgement  540ms
+   ✓ BUG-016 SMTP protocol > times out before acceptance without transmitting a message  516ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/outbox-delivery.test.ts > BUG-016 durable delivery > retains legacy SENT rows and initializes legacy pending rows only once
+error: new row for relation "email_outbox" violates check constraint "email_outbox_lease_pair"
+ ❯ ../node_modules/pg-pool/index.js:45:11
+ ❯ tests/integration/outbox-delivery.test.ts:140:5
+    138|     await enqueue(51);
+    139|     const message = (await claimMessage())!;
+    140|     await query("UPDATE email_outbox SET lease_until = now() - interva…
+       |     ^
+    141|     expect((await claimMessage())?.id).toBe(message.id);
+    142|     expect((await query('SELECT 1 FROM email_outbox_batches')).rowCoun…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 33 passed (34)
+   Start at  16:11:20
+   Duration  10.74s (transform 397ms, setup 9ms, collect 2.25s, tests 7.23s, environment 1ms, prepare 231ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path D:\Projects\PROJECTS 2.0\Committe MS\CommitteeFlow\server
+npm error workspace @committeeflow/server@0.1.0
+npm error location D:\Projects\PROJECTS 2.0\Committe MS\CommitteeFlow\server
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vitest run tests/integration/outbox-delivery.test.ts tests/integration/audit-notifications.test.ts tests/unit/mailer.test.ts

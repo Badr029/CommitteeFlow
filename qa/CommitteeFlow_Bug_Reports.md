@@ -1,4 +1,8 @@
-# CommitteeFlow — UI defect reports
+# CommitteeFlow — defect reports
+
+BUG-001–015 below retain their historical development/exploratory QA record.
+BUG-016 is the first deployed performance defect and remains open pending
+deployment and realistic retesting. See [retest plan](BUG-016-Retest.md).
 
 Fifteen defects on the Committee Plan, the sign-in screen, the import, the
 exports and the application shell. Each is something a user meets in the
@@ -17,7 +21,7 @@ container.
 * **BUG-015** was reported directly by the product owner exercising the new
   minimise controls from BUG-011.
 
-**All fifteen are fixed.** The current build does not exhibit them, so raise
+**The historical record marks the first fifteen fixed.** It reports that its build did not exhibit them, so raise
 any of them only against a build older than this one. Each Actual Result
 describes the build the defect was found in.
 
@@ -531,6 +535,7 @@ Actual Result
 | BUG-013 | Export: the printed plan is not the form the plan is circulated on | Medium |
 | BUG-014 | Export: committee names outside Latin-1 reach the PDF as corrupted text | High |
 | BUG-015 | Committee Plan: minimising a day or session hides nothing | Medium |
+| BUG-016 | Notifications: deployed mixed workload delivers repeated booking emails (deployed retest pending) | High |
 
 Five of BUG-001 to BUG-006 are only visible under a condition an ordinary pass
 would miss: a long month, a dark system, a screen reader, a narrow screen, or a
@@ -574,3 +579,39 @@ The standing lesson for the suite is the second bullet. Every one of the three
 data-dependent defects would have been caught on day one by running the existing
 cases against the real September file instead of the fixture, and none of them
 needed a new case to find.
+
+---
+
+## BUG-016 — Notifications: deployed mixed workload delivers repeated booking emails
+
+Screenshot: `QA-Evidence/screenshots/BUG-016-mailpit-before.png` (requested, not supplied).
+Measurements: `QA-Evidence/logs/BUG-016-observation.md`; `QA-Evidence/performance/BUG-016/manifest.json`.
+Database export: `QA-Evidence/logs/BUG-016-outbox-before.csv` (requested).
+Status: Open — implemented and locally verified; deployment and realistic retest pending.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. Use the deployed Vercel API and Supabase PostgreSQL/Cron with Nodemailer sending through a temporary Pinggy TCP tunnel into local Mailpit.
+2. Load the realistic three-month plan and approximately 530 enabled notification recipients; use synthetic Project Engineer and Viewer accounts.
+3. Run the mixed 10-user JMeter workload and identify one booking create/update/cancel lifecycle.
+4. Correlate its three outbox rows, attempt counts, Mailpit messages and overlapping worker execution times. Preserve the original JTL and exports before retesting.
+
+Expected Result
+
+* One logical notification per event: three for this lifecycle; each intended recipient receives each event once during normal delivery.
+* Temporary SMTP failures retain bounded retries without uncontrolled duplicate delivery.
+
+Actual Result
+
+* User reports three SENT outbox rows with attempt counts 5, 9 and 13.
+* Read-only local Mailpit metadata independently confirms 27 captured messages: 5 created, 9 updated and 13 cancelled, all with 530 BCC recipients. See `QA-Evidence/logs/BUG-016-mailpit-before.json`; addresses and message content are omitted.
+* Total reported attempts match observed messages. The original database export is still pending; no database final state is represented as independently measured.
+* Source inspection confirms locks end before transmission and no durable claim prevents competing workers. SMTP acknowledgement ambiguity and large-recipient latency remain additional deployment hypotheses.
+
+Environment and evidence provenance are recorded in the observation and performance manifest. Local controlled reproduction and subsequent validation will be linked separately; they do not substitute for the deployed retest.

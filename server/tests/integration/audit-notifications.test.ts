@@ -308,7 +308,7 @@ describe('audit trail and notifications', () => {
       }>('SELECT status, attempt_count, last_error, next_attempt_at FROM email_outbox');
       expect(row.rows[0]?.status).toBe('FAILED');
       expect(row.rows[0]?.attempt_count).toBe(1);
-      expect(row.rows[0]?.last_error).toContain('simulated SMTP failure');
+      expect(row.rows[0]?.last_error).toBe('SMTP_REJECTED');
       expect(row.rows[0]?.next_attempt_at.getTime()).toBeGreaterThan(Date.now());
 
       // Not due yet, so a second pass leaves it alone.

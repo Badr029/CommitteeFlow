@@ -1,5 +1,23 @@
 # QA
 
+## Current scope (2026-09-12)
+
+The register now covers development/exploratory defects and deployed performance
+defects. BUG-016 is open pending deployed verification. The older UI-only scope
+and counts below describe the original capture work, not the current register.
+
+* [QA journey](CommitteeFlow_QA_Journey.md): chronology and lifecycle links.
+* [BUG-016 implementation/retest plan](BUG-016-Retest.md): migration, limits,
+  evidence requests and remaining deployed checks.
+* `QA-Evidence/performance/BUG-016/`: sanitized JTL copies and original hashes.
+* `QA-Evidence/logs/BUG-016-*`: reported observation, real local reproduction
+  and automated verification output. Failed intermediate runs are retained.
+
+Preserve original evidence. The historical capture commands below can overwrite
+files; do not use them to replace before evidence. Capture new comparisons under
+distinct filenames. Feature delivery should use a separate requirement/acceptance
+record; no feature log exists and none is created for this defect.
+
 UI defect reports for CommitteeFlow, with the evidence behind them.
 
 ```

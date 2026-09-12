@@ -313,7 +313,7 @@ export class RecordingMailer implements Mailer {
   shouldFail = false;
 
   async send(email: OutgoingEmail): Promise<void> {
-    if (this.shouldFail) throw new Error('simulated SMTP failure');
+    if (this.shouldFail) throw Object.assign(new Error('simulated SMTP failure'), { code: 'ECONNECTION' });
     this.sent.push(email);
   }
   async verify(): Promise<boolean> {

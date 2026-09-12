@@ -1,0 +1,250 @@
+
+> committeeflow@0.1.0 test
+> npm run test --workspace server && npm run test --workspace client
+
+
+> @committeeflow/server@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.7 D:/Projects/PROJECTS 2.0/Committe MS/CommitteeFlow/server
+
+ ✓ tests/integration/outbox-delivery.test.ts (11 tests) 2279ms
+   ✓ BUG-016 durable delivery > delivers 530 recipients in 11 persistent batches and never reprocesses SENT work  378ms
+   ✓ BUG-016 durable delivery > records ambiguous acceptance, delays retries, and stops at the attempt limit  412ms
+ ✓ tests/integration/bookings.test.ts (51 tests) 12727ms
+   ✓ bookings > creating > stores a booking with its creator and timestamps  319ms
+   ✓ bookings > creating > allows several bookings on the same date by default  314ms
+   ✓ bookings > validation > enforces qty > 0  477ms
+   ✓ bookings > reading > filters by committee, project engineer and free text  443ms
+   ✓ bookings > authorization > knowing a booking id does not grant permission to change it  359ms
+   ✓ bookings > authorization > booking_edit_policy — OPEN business rule (spec §78.2) > ANY_ENGINEER lets a second engineer edit  497ms
+   ✓ bookings > authorization > booking_edit_policy — OPEN business rule (spec §78.2) > CREATOR_ONLY blocks a second engineer  405ms
+   ✓ bookings > authorization > booking_edit_policy — OPEN business rule (spec §78.2) > CREATOR_OR_PLAN_MANAGER admits a plan manager  490ms
+   ✓ bookings > updating > bumps the version and records the new editor  326ms
+   ✓ bookings > updating > leaves untouched fields alone  328ms
+   ✓ bookings > status, serial number and ownership > keeps a serial number exactly as it was written  313ms
+ ✓ tests/integration/plan-config.test.ts (35 tests) 6427ms
+   ✓ plan configuration > permission (spec §5) > refuses writes without the restricted permission, whatever the role  368ms
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > authorisation > lets a Project Engineer preview an import
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > authorisation > refuses a Viewer at confirm as well
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > authorisation > will not let one engineer confirm another engineer’s upload
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > writes no booking, whatever the file contains
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > suggests the mapping and reports the detected columns
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > classifies rows as valid, warning or error
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > inherits a blank grouped value and flags that it did
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > names the source row so an error can be found in the file
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > reads a CSV with Arabic, quoted commas and embedded newlines
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > reads a legacy .xls workbook
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > reads real Excel date and time serials as calendar values
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > preview > reports a corrupted workbook cleanly
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > accepts many rows sharing one Date + Time + Committee
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > accepts many rows sharing one Date + Time + Committee
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > does not flag a shared session as a duplicate
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > does not flag a shared session as a duplicate
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > does not flag a shared session as a duplicate
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > keeps several technical lines of one order
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > shared committee sessions > keeps several technical lines of one order
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > possible duplicates > warns without blocking when the same order is already in the plan
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > possible duplicates > warns without blocking when the same order is already in the plan
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > possible duplicates > warns without blocking when the same order is already in the plan
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > possible duplicates > warns without blocking when the same order is already in the plan
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > imports only the selected rows
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > imports only the selected rows
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > refuses to import a row that has an error
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > refuses to import a row that has an error
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > marks imported bookings with their source and batch
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > marks imported bookings with their source and batch
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > records booking history for every imported row
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > records booking history for every imported row
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > queues exactly one summary notification, not one per booking
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > queues exactly one summary notification, not one per booking
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > records the batch, its counts and the dates it touched
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > records the batch, its counts and the dates it touched
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > will not import the same batch twice
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > will not import the same batch twice
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > re-validates on confirm instead of trusting the request
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > re-validates on confirm instead of trusting the request
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > rolls back completely when the import fails
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > confirm > rolls back completely when the import fails
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > import history > lists past imports and can show one
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > import history > lists past imports and can show one
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > import history > lets a Viewer read import history
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/integration/plan-import.test.ts > Committee Plan import > import history > lets a Viewer read import history
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+ ✓ tests/integration/plan-import.test.ts (32 tests | 1 skipped) 6425ms
+ ✓ tests/integration/export.test.ts (18 tests) 4444ms
+   ✓ exports > produces a real .xlsx with the configured headers  328ms
+   ✓ exports > follows a rename, a hide and a reorder  331ms
+   ✓ exports > produces a real PDF  332ms
+   ✓ exports > the printed form > carries the form title, code and revision  406ms
+   ✓ exports > is available to a viewer  301ms
+ ✓ tests/integration/audit-notifications.test.ts (20 tests) 3946ms
+ ✓ tests/integration/concurrency.test.ts (16 tests) 3354ms
+   ✓ concurrency > optimistic locking on edit (spec §48) > rejects a stale version with 409 and the current version number  371ms
+   ✓ concurrency > slot exclusivity — OPEN business rule (spec §46, §47, §78.1) > DATE_TIME_COMMITTEE lets only one of three simultaneous identical bookings through  381ms
+ ✓ tests/integration/committee-sessions.test.ts (13 tests) 2404ms
+   ✓ shared committee sessions > accepts many projects into one date + time + committee  370ms
+   ✓ shared committee sessions > lets concurrent bookings into the same session all succeed  303ms
+ ✓ tests/integration/auth.test.ts (16 tests) 1956ms
+ ✓ tests/integration/plan-access.test.ts (8 tests) 1215ms
+ ✓ tests/unit/mailer.test.ts (6 tests) 1099ms
+   ✓ BUG-016 SMTP protocol > closes SMTP at the absolute deadline after acceptance without acknowledgement  548ms
+   ✓ BUG-016 SMTP protocol > times out before acceptance without transmitting a message  514ms
+stderr | tests/unit/plan-import.test.ts > upload guard > refuses an empty file and a corrupted workbook
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > parsing > reads the header row and the data under it
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > parsing > skips blank spacer rows without losing the real row numbers
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > parsing > prefers the sheet named for the importer over the first one
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > parsing > rejects a workbook with a header but no data
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > parsing > parses CSV, including quoted commas, quotes, newlines and Arabic
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > parsing > reads a legacy .xls workbook
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+stderr | tests/unit/plan-import.test.ts > date and time normalisation > reads a workbook whose dates and times are real serials
+Codepage tables are not loaded.  Non-ASCII characters may not give expected results
+
+ ✓ tests/unit/plan-import.test.ts (47 tests | 3 skipped) 68ms
+ ✓ tests/unit/pdf-text.test.ts (20 tests) 58ms
+ ✓ tests/unit/booking-values.test.ts (26 tests) 8ms
+ ✓ tests/unit/dates.test.ts (12 tests) 6ms
+
+ Test Files  15 passed (15)
+      Tests  327 passed | 4 skipped (331)
+   Start at  16:13:08
+   Duration  61.85s (transform 678ms, setup 29ms, collect 11.29s, tests 46.41s, environment 3ms, prepare 1.26s)
+
+
+> @committeeflow/client@0.1.0 test
+> vitest run
+
+
+ RUN  v3.2.7 D:/Projects/PROJECTS 2.0/Committe MS/CommitteeFlow/client
+
+ ✓ tests/plan-mobile.test.tsx (17 tests) 2377ms
+   ✓ Committee Plan on a phone > shared committee sessions (spec §46, §78.1 — confirmed) > prefills the schedule when adding a project to an existing session  373ms
+   ✓ Committee Plan on a phone > filters (spec §6) > applies filters from the sheet and shows them as removable chips  443ms
+ ✓ tests/plan-config.test.tsx (6 tests) 2841ms
+   ✓ Plan Configuration — renaming a field > does not save on blur — typing and clicking away leaves the label untouched  685ms
+   ✓ Plan Configuration — renaming a field > shows accept and discard controls only while the label is a draft  394ms
+   ✓ Plan Configuration — renaming a field > applies the rename once Accept is pressed  480ms
+   ✓ Plan Configuration — renaming a field > discards the draft and restores the saved label on Cancel  487ms
+   ✓ Plan Configuration — renaming a field > accepts a draft submitted with Enter  402ms
+   ✓ Plan Configuration — renaming a field > discards the draft on Escape without saving  391ms
+ ✓ tests/booking-form.test.tsx (13 tests) 3711ms
+   ✓ Booking form > saving > sends only the configured values and the CSRF token  1139ms
+   ✓ Booking form > saving > attaches server validation messages to their own fields  1035ms
+   ✓ Booking form > saving > warns before discarding unsaved changes  310ms
+ ✓ tests/plan-import.test.tsx (14 tests) 3773ms
+   ✓ Committee Plan import > who can import > offers Import Plan to a Project Engineer, beside the exports  355ms
+   ✓ Committee Plan import > choosing a file > states the supported formats and that nothing imports yet  330ms
+   ✓ Committee Plan import > preview > filters rows by category  435ms
+   ✓ Committee Plan import > confirming > imports the valid rows and reports what happened  341ms
+ ✓ tests/plan.test.tsx (33 tests) 4269ms
+   ✓ Committee Plan > month navigation (spec §8, §9) > shows the requested month and steps forwards and backwards  350ms
+
+ Test Files  5 passed (5)
+      Tests  83 passed (83)
+   Start at  16:14:11
+   Duration  16.21s (transform 968ms, setup 13.71s, collect 11.04s, tests 16.97s, environment 32.62s, prepare 772ms)
+

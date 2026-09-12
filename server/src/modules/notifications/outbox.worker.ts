@@ -1,5 +1,5 @@
 import { env } from '../../config/env.js';
-import { withTransaction } from '../../db/index.js';
+import { performance } from 'node:perf_hooks';
 import { logger } from '../../lib/logger.js';
 import { getMailer } from './mailer.js';
 import * as outbox from './outbox.repository.js';
@@ -10,7 +10,7 @@ import { renderEmail, type NotificationPayload } from './templates.js';
  *
  * Runs inside the API process for the MVP. It is written so that moving it to a
  * separate container later is a deployment change, not a rewrite: claiming uses
- * `FOR UPDATE SKIP LOCKED`, so any number of workers can run side by side.
+ * durable leased claims and fenced updates, so workers can run side by side.
  */
 
 let timer: NodeJS.Timeout | undefined;
@@ -25,43 +25,64 @@ export async function processOutboxBatch(): Promise<{ sent: number; failed: numb
   const mailer = getMailer();
   let sent = 0;
   let failed = 0;
+  const deadline = performance.now() + config.OUTBOX_RUN_BUDGET_MS;
+  const hasTime = () => performance.now() + config.SMTP_SEND_TIMEOUT_MS + 5_000 < deadline;
 
-  // Each message is claimed, sent and marked inside its own transaction so a
-  // failure on one cannot roll back the successful sends beside it.
-  const claimed = await withTransaction((tx) => outbox.claimDueMessages(config.OUTBOX_BATCH_SIZE, tx));
-
-  for (const message of claimed) {
+  for (let i = 0; i < config.OUTBOX_BATCH_SIZE && hasTime(); i++) {
+    const message = await outbox.claimMessage();
+    if (!message) break;
+    // Rendering/DB errors retain the lease for recovery; never retry SMTP here.
     const payload = message.payload as unknown as NotificationPayload;
-    try {
-      const rendered = renderEmail(payload, planUrlFor(payload));
-      await mailer.send({
-        to: message.recipients,
-        subject: message.subject,
-        text: rendered.text,
-        html: rendered.html,
-      });
-      await outbox.markSent(message.id);
-      sent += 1;
-    } catch (error) {
-      failed += 1;
-      const reason = error instanceof Error ? error.message : String(error);
-      await outbox.markFailed(message.id, reason, config.OUTBOX_MAX_ATTEMPTS);
-      logger.error(
-        {
-          err: error,
-          outboxId: message.id,
-          eventType: message.eventType,
-          attempt: message.attemptCount + 1,
-        },
-        'failed to deliver notification email',
-      );
+    const rendered = renderEmail(payload, planUrlFor(payload));
+    while (hasTime()) {
+      const batch = await outbox.beginBatch(message);
+      if (!batch) break;
+      let remaining = batch.remaining_recipients;
+      let failure: 'SMTP_REJECTED' | 'DELIVERY_UNKNOWN' | null = null;
+      try {
+        const result = await mailer.send({
+          to: batch.remaining_recipients,
+          messageId: deliveryMessageId(message.delivery_key, batch.batch_no),
+          subject: message.subject, text: rendered.text, html: rendered.html,
+        });
+        // A fulfilled sendMail may still have rejected some RCPT commands.
+        const accepted = new Set(result?.accepted ?? batch.remaining_recipients);
+        remaining = batch.remaining_recipients.filter((recipient) => !accepted.has(recipient));
+        if (remaining.length) failure = 'SMTP_REJECTED';
+      } catch (error) {
+        failure = classifyDeliveryFailure(error);
+      }
+      // Outside the SMTP catch: a failed acknowledgement write is ambiguous,
+      // not an SMTP rejection. Recovery observes the durable in_flight marker.
+      const complete = await outbox.finishBatch(message, batch, remaining, failure);
+      if (failure) {
+        failed++;
+        logger.warn({ outboxId: message.id, batch: batch.batch_no,
+          attempt: batch.attempt_count, failure }, 'notification delivery deferred');
+        break;
+      }
+      if (complete) { sent++; break; }
     }
+    await outbox.releaseMessage(message);
   }
-
-  if (sent > 0 || failed > 0) {
-    logger.info({ sent, failed, transport: mailer.mode }, 'outbox batch processed');
-  }
+  if (sent || failed) logger.info({ sent, failed, transport: mailer.mode }, 'outbox batch processed');
   return { sent, failed };
+}
+
+export function deliveryMessageId(key: string, batch: number): string {
+  return `<${key}.${batch}@notifications.committeeflow.invalid>`;
+}
+
+export function classifyDeliveryFailure(error: unknown): 'SMTP_REJECTED' | 'DELIVERY_UNKNOWN' {
+  const details = error as { code?: string; command?: string; responseCode?: number } | null;
+  // An explicit negative SMTP reply or a connection/auth failure precedes acceptance.
+  if (details && ((details.responseCode ?? 0) >= 400 ||
+    ['ECONNECTION', 'ECONNREFUSED', 'EDNS', 'EAUTH', 'EENVELOPE'].includes(details.code ?? ''))) {
+    return 'SMTP_REJECTED';
+  }
+  // Timeouts, resets, missing final DATA acknowledgement and unknown errors
+  // cannot prove non-delivery. No raw error text or recipient addresses persist.
+  return 'DELIVERY_UNKNOWN';
 }
 
 function planUrlFor(payload: NotificationPayload): string {

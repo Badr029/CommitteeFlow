@@ -1,0 +1,288 @@
+{
+  "capturedAt": "2026-09-12T13:19:18.125Z",
+  "source": "GET http://127.0.0.1:8025/api/v1/messages",
+  "provenance": "Read-only metadata from existing local Mailpit. No messages sent, marked read, deleted or altered. Addresses, names, subjects, bodies and snippets omitted.",
+  "total": 27,
+  "returned": 27,
+  "unread": 27,
+  "eventCounts": {
+    "cancelled": 13,
+    "updated": 9,
+    "created": 5
+  },
+  "uniqueMessageIds": 27,
+  "distinctSubjects": 3,
+  "limitation": "Outbox attempt counts and final states still user-reported; requires database export. Event labels inferred from subject verbs; subjects themselves omitted.",
+  "messages": [
+    {
+      "id": "68lgAVjP3EZwBxtBv8uMnw",
+      "messageId": "5f2ad151-8331-5eaa-9576-916acbacf8b3@committeeflow.local",
+      "created": "2026-09-12T12:43:19.164Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "1CHFy7GUxA3YEUVpeoIC7K",
+      "messageId": "fdd5a305-d5b1-620e-b8cd-5ff92f6d02f6@committeeflow.local",
+      "created": "2026-09-12T12:43:18.009Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21732
+    },
+    {
+      "id": "5NygSmh9Jie83wknRAI9Q0",
+      "messageId": "ed433522-fbbc-5f53-2555-aaf88546c36f@committeeflow.local",
+      "created": "2026-09-12T12:42:51.742Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "6C3kvTGavL4kF7uHgPwj9C",
+      "messageId": "38770951-2dab-65a1-e34c-51be554112d3@committeeflow.local",
+      "created": "2026-09-12T12:42:49.28Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "5Ho2hvkhCVaE1jxJgZzORE",
+      "messageId": "da781d70-f4a3-da83-374e-3e59255f7b43@committeeflow.local",
+      "created": "2026-09-12T12:42:48.222Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21732
+    },
+    {
+      "id": "2qEwCoTyqKe4qcbkb2EhgG",
+      "messageId": "509305a0-19fc-becf-2ac7-76941d1679b3@committeeflow.local",
+      "created": "2026-09-12T12:42:21.762Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "4nsnw0DBQ1M15GoYEYVkVr",
+      "messageId": "c5f24acb-1560-3df8-4a06-3372f7df1ba2@committeeflow.local",
+      "created": "2026-09-12T12:42:19.751Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "4YPqRBLzkfxdRbMm8Bb0M0",
+      "messageId": "9681e3ef-172a-c334-77e3-4e78ffe22624@committeeflow.local",
+      "created": "2026-09-12T12:42:18.851Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21732
+    },
+    {
+      "id": "010DXA2pNuRqd264xbnK96",
+      "messageId": "ce3b7c53-32b4-4753-90bc-77887ff05e50@committeeflow.local",
+      "created": "2026-09-12T12:41:51.843Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "6vnOq9ZTGARvLgrt4opNSk",
+      "messageId": "8ba40c75-5511-14b3-e3b9-0bcedf04cbf1@committeeflow.local",
+      "created": "2026-09-12T12:41:50.441Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "4e4fH0gynag0DIZc46NZjB",
+      "messageId": "8a3afefb-93e0-82b6-c1de-24eb5b898be7@committeeflow.local",
+      "created": "2026-09-12T12:41:48.207Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "2uhDih9wEZzotYczvirCNl",
+      "messageId": "6552a6ab-ea7e-43a4-516a-f7c415f9bd3a@committeeflow.local",
+      "created": "2026-09-12T12:41:22.727Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "0gUS36wtmJjnIRto8DHMgy",
+      "messageId": "0ef00c8b-3d23-26da-31e9-8cf7f49eee73@committeeflow.local",
+      "created": "2026-09-12T12:41:20.204Z",
+      "event": "cancelled",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21733
+    },
+    {
+      "id": "2VPf6br2paWE0PGrL3elKv",
+      "messageId": "685a0b35-aaac-ad6b-ddc2-8d3092fe3218@committeeflow.local",
+      "created": "2026-09-12T12:41:18.234Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "658IMgrvqmK0ZNGEjqGUYT",
+      "messageId": "22376553-f409-f654-304a-9f9a45f200ee@committeeflow.local",
+      "created": "2026-09-12T12:40:50.255Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "7BFN32QbDARBHsZ7ZHWZfO",
+      "messageId": "37b221ba-a87a-5466-fcc9-c42677a36f92@committeeflow.local",
+      "created": "2026-09-12T12:40:47.609Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "3fRIlxU8CRU9L6TukuksmH",
+      "messageId": "54910358-b546-a097-a71e-37dedaba306a@committeeflow.local",
+      "created": "2026-09-12T12:40:19.762Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "33ojvrq3KTyDARiDZaLfKs",
+      "messageId": "34e9c48d-bb5a-117f-5524-3592dcd59f87@committeeflow.local",
+      "created": "2026-09-12T12:40:17.765Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "2n85DRbmCzDVfqSGfWwysI",
+      "messageId": "755d4a77-16f1-347c-ffde-f5c5118370a4@committeeflow.local",
+      "created": "2026-09-12T12:39:50.268Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "0WkYZwax4ImUjDpLQlH1ns",
+      "messageId": "5080c7d1-b8fc-a029-069c-d7e0905e2193@committeeflow.local",
+      "created": "2026-09-12T12:39:48.721Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "3mn6jO7aCJ0DALmHC2f42d",
+      "messageId": "cecf0f6b-660c-1130-0290-31082a442398@committeeflow.local",
+      "created": "2026-09-12T12:39:20.964Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "08lltjFBt3t2va1I2T1M2R",
+      "messageId": "87817261-0ded-d1b7-0059-53e2390dc7f0@committeeflow.local",
+      "created": "2026-09-12T12:39:18.472Z",
+      "event": "updated",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 22008
+    },
+    {
+      "id": "1nBWA7jaDn8SnoTjFAFA6j",
+      "messageId": "d5c8c76e-f5af-4ace-9c30-2e66146f1e71@committeeflow.local",
+      "created": "2026-09-12T12:38:48.707Z",
+      "event": "created",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21510
+    },
+    {
+      "id": "0kp8KQ7cfbN3zMflHGqDXg",
+      "messageId": "81046f45-71c1-7278-c1fd-dee6872947f8@committeeflow.local",
+      "created": "2026-09-12T12:38:18.755Z",
+      "event": "created",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21510
+    },
+    {
+      "id": "2nZMA5xeP21bZX1H5i3075",
+      "messageId": "55b32213-6394-f155-e243-764e20039e33@committeeflow.local",
+      "created": "2026-09-12T12:37:48.059Z",
+      "event": "created",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21510
+    },
+    {
+      "id": "59vhuTWLzZ4ipDcM2anknu",
+      "messageId": "d2b1fbe7-68cf-d83c-15a7-e3da32eb8f2b@committeeflow.local",
+      "created": "2026-09-12T12:37:18.719Z",
+      "event": "created",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21510
+    },
+    {
+      "id": "5jgAyA0OjwUwNzUAyZC4dZ",
+      "messageId": "42b335e7-3b6a-f091-844d-164551d94d67@committeeflow.local",
+      "created": "2026-09-12T12:36:49.341Z",
+      "event": "created",
+      "visibleToCount": 1,
+      "ccCount": 0,
+      "bccCount": 530,
+      "sizeBytes": 21510
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "provenance": "User-pasted read-only cron.job query result during guided evidence collection; not queried directly by Codex.",
+  "jobid": 1,
+  "schedule": "30 seconds",
+  "active": false,
+  "uses_pg_net_http_post": true,
+  "mentions_outbox_endpoint": true,
+  "interpretation": "Currently paused. The command mentions asynchronous net.http_post and the outbox endpoint. Earlier Cron successes do not establish backend HTTP completion. This snapshot does not establish when the job was paused or prove backend overlap."
+}

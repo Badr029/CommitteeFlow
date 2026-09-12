@@ -1,0 +1,53 @@
+
+> committeeflow@0.1.0 build
+> npm run build --workspace client && npm run build --workspace server
+
+
+> @committeeflow/client@0.1.0 build
+> tsc -b && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1842 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                                           1.11 kB │ gzip:   0.56 kB
+dist/assets/barlow-vietnamese-400-normal-BFeobeCK.woff                    6.09 kB
+dist/assets/barlow-vietnamese-500-normal-GNfB7rCE.woff                    6.15 kB
+dist/assets/barlow-vietnamese-600-normal-CA_GiK2e.woff                    6.23 kB
+dist/assets/barlow-semi-condensed-vietnamese-500-normal-hJ2t9k9e.woff     6.27 kB
+dist/assets/barlow-semi-condensed-vietnamese-600-normal-DzVrjA0Q.woff     6.40 kB
+dist/assets/barlow-vietnamese-400-normal-Dpl4UHAZ.woff2                   7.59 kB
+dist/assets/barlow-vietnamese-500-normal-zTViEIzf.woff2                   7.67 kB
+dist/assets/barlow-semi-condensed-vietnamese-500-normal-DGADhYWF.woff2    7.81 kB
+dist/assets/barlow-vietnamese-600-normal-DcjprdFV.woff2                   7.90 kB
+dist/assets/barlow-semi-condensed-vietnamese-600-normal-b1FQiZcx.woff2    8.01 kB
+dist/assets/barlow-latin-ext-400-normal-CvBsJvxq.woff                    12.31 kB
+dist/assets/barlow-semi-condensed-latin-ext-500-normal-rZeYuEMb.woff     12.37 kB
+dist/assets/barlow-latin-ext-500-normal-CJPcKP2Q.woff                    12.41 kB
+dist/assets/barlow-semi-condensed-latin-ext-600-normal-BuP8AaxH.woff     12.51 kB
+dist/assets/barlow-latin-ext-600-normal-DMVRjfRT.woff                    12.60 kB
+dist/assets/barlow-latin-ext-400-normal-HxX4XjxC.woff2                   14.27 kB
+dist/assets/barlow-latin-ext-500-normal-DOaysfXq.woff2                   14.42 kB
+dist/assets/barlow-semi-condensed-latin-ext-500-normal-BXdp1BvY.woff2    14.52 kB
+dist/assets/barlow-semi-condensed-latin-ext-600-normal-BkQ9hN72.woff2    14.85 kB
+dist/assets/barlow-latin-ext-600-normal-B8NK_A3D.woff2                   14.97 kB
+dist/assets/barlow-latin-500-normal-C1h8hMer.woff                        19.52 kB
+dist/assets/barlow-latin-400-normal-fsAxiSwU.woff                        19.58 kB
+dist/assets/barlow-semi-condensed-latin-500-normal-CFOoVYFH.woff         19.72 kB
+dist/assets/barlow-latin-600-normal-CNwfPWQD.woff                        19.88 kB
+dist/assets/barlow-semi-condensed-latin-600-normal-DyOfdMBA.woff         20.03 kB
+dist/assets/barlow-latin-500-normal-BPAOfeC8.woff2                       22.01 kB
+dist/assets/barlow-latin-400-normal-qiz4-Cze.woff2                       22.20 kB
+dist/assets/barlow-semi-condensed-latin-500-normal-G0uxJNrM.woff2        22.43 kB
+dist/assets/barlow-latin-600-normal-DILqtrty.woff2                       22.77 kB
+dist/assets/barlow-semi-condensed-latin-600-normal-BkLiAYu4.woff2        22.98 kB
+dist/assets/index-ClgIbLL1.css                                           88.40 kB │ gzip:  14.34 kB
+dist/assets/react-DmDrMsH7.js                                            42.55 kB │ gzip:  15.24 kB
+dist/assets/query-DG2D9124.js                                            43.94 kB │ gzip:  13.47 kB
+dist/assets/index-C-t2pM-7.js                                           391.95 kB │ gzip: 120.91 kB
+✓ built in 9.65s
+
+> @committeeflow/server@0.1.0 build
+> tsc -p tsconfig.build.json
+

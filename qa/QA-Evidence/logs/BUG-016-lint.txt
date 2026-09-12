@@ -1,0 +1,12 @@
+
+> committeeflow@0.1.0 lint
+> npm run lint --workspace server && npm run lint --workspace client
+
+
+> @committeeflow/server@0.1.0 lint
+> eslint src tests --max-warnings 0
+
+
+> @committeeflow/client@0.1.0 lint
+> eslint src --max-warnings 0
+
