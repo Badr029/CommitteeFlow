@@ -24,6 +24,10 @@ export interface ClaimedMessage {
   id: number;
   delivery_key: string;
   claim_token: string;
+  event_type: OutboxEventType;
+  booking_id: string | null;
+  created_at: Date;
+  claimed_at: Date;
   subject: string;
   payload: Record<string, unknown>;
 }
@@ -56,12 +60,19 @@ export async function claimMessage(): Promise<ClaimedMessage | undefined> {
           ELSE clock_timestamp() END WHERE id = $1`,
       [row.id, interrupted.length > 0, config.OUTBOX_MAX_ATTEMPTS, config.OUTBOX_AMBIGUOUS_RETRY_SECONDS], tx);
     }
-    const message = await queryOne<ClaimedMessage>(`UPDATE email_outbox SET
+    const message = await queryOne<ClaimedMessage>(`UPDATE email_outbox AS target SET
         claim_token = $1, lease_until = clock_timestamp() + make_interval(secs => $2)
-      WHERE id = (SELECT id FROM email_outbox WHERE status <> 'SENT'
-        AND claim_token IS NULL AND next_attempt_at <= clock_timestamp()
-        ORDER BY next_attempt_at, id LIMIT 1 FOR UPDATE SKIP LOCKED)
-      RETURNING id, delivery_key, claim_token, subject, payload`,
+      WHERE target.id = (SELECT candidate.id FROM email_outbox AS candidate
+        WHERE candidate.status <> 'SENT' AND candidate.claim_token IS NULL
+          AND candidate.next_attempt_at <= clock_timestamp()
+          AND NOT EXISTS (SELECT 1 FROM email_outbox AS predecessor
+            WHERE predecessor.status <> 'SENT' AND predecessor.id < candidate.id
+              AND predecessor.booking_id IS NOT DISTINCT FROM candidate.booking_id)
+        ORDER BY candidate.next_attempt_at, candidate.id
+        LIMIT 1 FOR UPDATE OF candidate SKIP LOCKED)
+      RETURNING target.id, target.delivery_key, target.claim_token,
+        target.event_type, target.booking_id, target.created_at,
+        clock_timestamp() AS claimed_at, target.subject, target.payload`,
     [randomUUID(), config.OUTBOX_LEASE_SECONDS], tx);
     if (!message) return undefined;
     // Snapshot once, including legacy unsent rows. Existing batches never repartition.
@@ -125,6 +136,12 @@ export async function finishBatch(message: ClaimedMessage, batch: DeliveryBatch,
       await queryOne(`UPDATE email_outbox SET status = 'SENT', sent_at = clock_timestamp(),
         last_error = NULL, claim_token = NULL, lease_until = NULL WHERE id = $1`, [message.id], tx);
       return true;
+    }
+    if (!failure) {
+      // One successful child is one scheduling quantum. Move this unfinished
+      // parent behind older eligible parents before releasing its claim.
+      await queryOne(`UPDATE email_outbox SET status = 'PENDING', last_error = NULL,
+        next_attempt_at = clock_timestamp() WHERE id = $1`, [message.id], tx);
     }
     if (failure) {
       const delay = failure === 'DELIVERY_UNKNOWN' ? config.OUTBOX_AMBIGUOUS_RETRY_SECONDS : Math.min(4 ** batch.attempt_count, 3600);

@@ -2,11 +2,11 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { performance } from 'node:perf_hooks';
 import { query } from '../../src/db/index.js';
 import { closePool } from '../../src/db/pool.js';
-import { beginBatch, claimMessage, enqueueEmail, finishBatch } from '../../src/modules/notifications/outbox.repository.js';
+import { beginBatch, claimMessage, enqueueEmail, finishBatch, releaseMessage, type OutboxEventType } from '../../src/modules/notifications/outbox.repository.js';
 import * as repository from '../../src/modules/notifications/outbox.repository.js';
 import { setMailer } from '../../src/modules/notifications/mailer.js';
 import { processOutboxBatch } from '../../src/modules/notifications/outbox.worker.js';
-import { resetDatabase, useRecordingMailer } from '../helpers/harness.js';
+import { createUser, resetDatabase, useRecordingMailer } from '../helpers/harness.js';
 
 async function enqueue(count = 2) {
   await enqueueEmail({ eventType: 'PLAN_IMPORTED', bookingId: null,
@@ -14,6 +14,24 @@ async function enqueue(count = 2) {
     subject: 'Synthetic import', payload: { eventType: 'PLAN_IMPORTED', batchId: 'fixture',
       filename: 'synthetic.csv', actorName: 'Test', importedRows: 1, skippedRows: 0,
       warningRows: 0, firstBookingDate: null, lastBookingDate: null } });
+}
+
+async function createBookingScope(offNo: string): Promise<string> {
+  const owner = await createUser({ role: 'PROJECT_ENGINEER' });
+  const result = await query<{ id: string }>(`INSERT INTO bookings
+    (booking_date, booking_time, off_no, order_name, committee, created_by, updated_by)
+    VALUES ('2026-10-06', '10:00', $1, 'Synthetic booking', 'Test committee', $2, $2)
+    RETURNING id`, [offNo, owner.id]);
+  return result.rows[0]!.id;
+}
+
+async function enqueueBooking(bookingId: string, eventType: Exclude<OutboxEventType, 'PLAN_IMPORTED'>,
+  count: number): Promise<void> {
+  await enqueueEmail({ eventType, bookingId,
+    recipients: Array.from({ length: count }, (_, i) => `${bookingId}-${i}@example.test`),
+    subject: `Synthetic ${eventType}`, payload: { eventType, bookingId,
+      bookingDate: '2026-10-06', bookingTime: '10:00', offNo: 'SYNTHETIC',
+      orderName: 'Synthetic booking', committee: 'Test committee', actorName: 'Test', changes: [] } });
 }
 
 describe('BUG-016 durable delivery', () => {
@@ -178,5 +196,185 @@ describe('BUG-016 durable delivery', () => {
     expect((await query('SELECT claim_token FROM email_outbox')).rows[0]?.claim_token).toBeNull();
     expect(await processOutboxBatch()).toEqual({ sent: 1, failed: 0 });
     expect(mailer.sent).toHaveLength(2);
+  });
+});
+
+describe('BUG-017 outbox fairness', () => {
+  beforeEach(resetDatabase);
+  afterAll(closePool);
+
+  it('allows an independent parent to progress before a large parent completes', async () => {
+    const mailer = useRecordingMailer();
+    const bookingA = await createBookingScope('FAIR-A');
+    const bookingB = await createBookingScope('FAIR-B');
+    await enqueueBooking(bookingA, 'BOOKING_CREATED', 101);
+    await enqueueBooking(bookingB, 'BOOKING_CREATED', 1);
+    const parents = (await query<{ delivery_key: string }>(
+      'SELECT delivery_key FROM email_outbox ORDER BY id')).rows;
+
+    await processOutboxBatch();
+
+    const order = mailer.sent.map((message) => message.messageId);
+    expect(order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`))
+      .toBeLessThan(order.indexOf(`<${parents[0]!.delivery_key}.2@notifications.committeeflow.invalid>`));
+  });
+
+  it('advances three independent parents in fair rounds', async () => {
+    const mailer = useRecordingMailer();
+    const bookings = await Promise.all(['ROUND-A', 'ROUND-B', 'ROUND-C'].map(createBookingScope));
+    await enqueueBooking(bookings[0]!, 'BOOKING_CREATED', 101);
+    await enqueueBooking(bookings[1]!, 'BOOKING_CREATED', 51);
+    await enqueueBooking(bookings[2]!, 'BOOKING_CREATED', 1);
+    const parents = (await query<{ delivery_key: string }>(
+      'SELECT delivery_key FROM email_outbox ORDER BY id')).rows;
+
+    expect(await processOutboxBatch()).toEqual({ sent: 3, failed: 0 });
+
+    const order = mailer.sent.map((message) => message.messageId);
+    const finalLargeBatch = order.indexOf(
+      `<${parents[0]!.delivery_key}.2@notifications.committeeflow.invalid>`);
+    expect(order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`))
+      .toBeLessThan(finalLargeBatch);
+    expect(order.indexOf(`<${parents[2]!.delivery_key}.0@notifications.committeeflow.invalid>`))
+      .toBeLessThan(finalLargeBatch);
+  });
+
+  it('preserves same-booking lifecycle order while another booking progresses', async () => {
+    const mailer = useRecordingMailer();
+    const bookingA = await createBookingScope('ORDER-A');
+    const bookingB = await createBookingScope('ORDER-B');
+    await enqueueBooking(bookingA, 'BOOKING_CREATED', 51);
+    await enqueueBooking(bookingA, 'BOOKING_UPDATED', 1);
+    await enqueueBooking(bookingA, 'BOOKING_CANCELLED', 1);
+    await enqueueBooking(bookingB, 'BOOKING_CREATED', 1);
+    const parents = (await query<{ delivery_key: string }>(
+      'SELECT delivery_key FROM email_outbox ORDER BY id')).rows;
+
+    expect(await processOutboxBatch()).toEqual({ sent: 4, failed: 0 });
+
+    const order = mailer.sent.map((message) => message.messageId);
+    const createdDone = order.indexOf(`<${parents[0]!.delivery_key}.1@notifications.committeeflow.invalid>`);
+    const updated = order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`);
+    const cancelled = order.indexOf(`<${parents[2]!.delivery_key}.0@notifications.committeeflow.invalid>`);
+    const independent = order.indexOf(`<${parents[3]!.delivery_key}.0@notifications.committeeflow.invalid>`);
+    expect(independent).toBeLessThan(createdDone);
+    expect(createdDone).toBeLessThan(updated);
+    expect(updated).toBeLessThan(cancelled);
+  });
+
+  it('lets a claimed booking coexist only with an independent ordering scope', async () => {
+    const bookingA = await createBookingScope('CLAIM-A');
+    const bookingB = await createBookingScope('CLAIM-B');
+    await enqueueBooking(bookingA, 'BOOKING_CREATED', 51);
+    await enqueueBooking(bookingA, 'BOOKING_UPDATED', 1);
+    await enqueueBooking(bookingB, 'BOOKING_CREATED', 1);
+
+    const first = (await claimMessage())!;
+    const second = (await claimMessage())!;
+    expect(first.booking_id).toBe(bookingA);
+    expect(second.booking_id).toBe(bookingB);
+    expect(await claimMessage()).toBeUndefined();
+    await releaseMessage(first);
+    await releaseMessage(second);
+  });
+
+  it('serializes plan-wide events whose booking id is null', async () => {
+    await enqueue(51);
+    await enqueue(1);
+
+    const first = (await claimMessage())!;
+    expect(first.booking_id).toBeNull();
+    expect(await claimMessage()).toBeUndefined();
+    await releaseMessage(first);
+
+    const mailer = useRecordingMailer();
+    expect(await processOutboxBatch()).toEqual({ sent: 2, failed: 0 });
+    const parents = (await query<{ delivery_key: string }>(
+      'SELECT delivery_key FROM email_outbox ORDER BY id')).rows;
+    const order = mailer.sent.map((message) => message.messageId);
+    expect(order.indexOf(`<${parents[0]!.delivery_key}.1@notifications.committeeflow.invalid>`))
+      .toBeLessThan(order.indexOf(`<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`));
+  });
+
+  it('keeps duplicate protection with concurrent invocations and several parents', async () => {
+    const mailer = useRecordingMailer();
+    const bookings = await Promise.all(['RACE-A', 'RACE-B', 'RACE-C'].map(createBookingScope));
+    for (const booking of bookings) await enqueueBooking(booking, 'BOOKING_CREATED', 51);
+
+    await Promise.all([processOutboxBatch(), processOutboxBatch()]);
+
+    expect(mailer.sent).toHaveLength(6);
+    expect(new Set(mailer.sent.map((message) => message.messageId)).size).toBe(6);
+    expect((await query("SELECT 1 FROM email_outbox WHERE status = 'SENT'")).rowCount).toBe(3);
+  });
+
+  it('starts an independent parent while a large parent SMTP batch is still slow', async () => {
+    const bookingA = await createBookingScope('SLOW-FAIR-A');
+    const bookingB = await createBookingScope('SLOW-FAIR-B');
+    await enqueueBooking(bookingA, 'BOOKING_CREATED', 101);
+    await enqueueBooking(bookingB, 'BOOKING_CREATED', 1);
+    const parents = (await query<{ delivery_key: string }>(
+      'SELECT delivery_key FROM email_outbox ORDER BY id')).rows;
+    const largeFirst = `<${parents[0]!.delivery_key}.0@notifications.committeeflow.invalid>`;
+    const independent = `<${parents[1]!.delivery_key}.0@notifications.committeeflow.invalid>`;
+    let releaseLarge!: () => void;
+    let largeStarted!: () => void;
+    let independentStarted!: () => void;
+    const largeBlocked = new Promise<void>((resolve) => { releaseLarge = resolve; });
+    const largeObserved = new Promise<void>((resolve) => { largeStarted = resolve; });
+    const independentObserved = new Promise<void>((resolve) => { independentStarted = resolve; });
+    const order: string[] = [];
+    setMailer({ mode: 'smtp', verify: async () => true, close: async () => {},
+      send: async (email) => {
+        order.push(email.messageId);
+        if (email.messageId === independent) independentStarted();
+        if (email.messageId === largeFirst) {
+          largeStarted();
+          await largeBlocked;
+        }
+        return { accepted: email.to };
+      } });
+
+    const run = processOutboxBatch();
+    await Promise.race([
+      Promise.all([largeObserved, independentObserved]),
+      new Promise<never>((_, reject) => setTimeout(
+        () => reject(new Error('independent parent remained starved behind slow SMTP')), 1000)),
+    ]);
+    expect(order).toContain(largeFirst);
+    expect(order).toContain(independent);
+    releaseLarge();
+    expect(await run).toEqual({ sent: 2, failed: 0 });
+  });
+
+  it('bounds slow SMTP work to the configured parent concurrency', async () => {
+    const bookings = await Promise.all(['SLOW-A', 'SLOW-B', 'SLOW-C'].map(createBookingScope));
+    for (const booking of bookings) await enqueueBooking(booking, 'BOOKING_CREATED', 1);
+    let active = 0;
+    let maximumActive = 0;
+    let started = 0;
+    let release!: () => void;
+    let firstWave!: () => void;
+    const blocked = new Promise<void>((resolve) => { release = resolve; });
+    const twoStarted = new Promise<void>((resolve) => { firstWave = resolve; });
+    setMailer({ mode: 'smtp', verify: async () => true, close: async () => {},
+      send: async (email) => {
+        active++;
+        started++;
+        maximumActive = Math.max(maximumActive, active);
+        if (started === 2) firstWave();
+        await blocked;
+        active--;
+        return { accepted: email.to };
+      } });
+
+    const run = processOutboxBatch();
+    await twoStarted;
+    expect(started).toBe(2);
+    expect(maximumActive).toBe(2);
+    release();
+    expect(await run).toEqual({ sent: 3, failed: 0 });
+    expect(started).toBe(3);
+    expect(maximumActive).toBe(2);
   });
 });

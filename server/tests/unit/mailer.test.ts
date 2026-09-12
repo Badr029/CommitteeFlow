@@ -95,6 +95,9 @@ describe('BUG-016 SMTP protocol', () => {
     expect(() => parseEnvFrom({ ...base, OUTBOX_LEASE_SECONDS: '30' })).toThrow();
     expect(() => parseEnvFrom({ ...base, OUTBOX_RUN_BUDGET_MS: '30000' })).toThrow();
     expect(() => parseEnvFrom({ ...base, OUTBOX_RECIPIENT_BATCH_SIZE: '0' })).toThrow();
+    expect(() => parseEnvFrom({ ...base, OUTBOX_PARENT_CONCURRENCY: '0' })).toThrow();
+    expect(() => parseEnvFrom({ ...base, OUTBOX_PARENT_CONCURRENCY: '6' })).toThrow();
     expect(parseEnvFrom(base).OUTBOX_RECIPIENT_BATCH_SIZE).toBe(50);
+    expect(parseEnvFrom(base).OUTBOX_PARENT_CONCURRENCY).toBe(2);
   });
 });

@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-09-12",
+  "purpose": "Read-only BUG-017 API baseline inventory; JTL data remains at the source paths and is not duplicated here.",
+  "limitations": [
+    "JMeter HTTP success does not prove SMTP delivery, fairness, message uniqueness, or outbox completion.",
+    "The latest worker-on run was interrupted during SMTP draining.",
+    "No worker duration export accompanies these JTL files."
+  ],
+  "runs": [
+    {
+      "label": "pool1-mixed30",
+      "path": "D:/Projects/PROJECTS 2.0/Committe MS/Test/CommitteeFlow_JMeter_Performance_Suite/performance-tests/results/07-CommitteeFlow-Realistic-Mixed-30-Users-20260912-185329/07-CommitteeFlow-Realistic-Mixed-30-Users.jtl",
+      "sha256": "68703B0DBB46DEAC3544FBD577DBD37D07C1003279021599ED0D5061E970B2F3",
+      "apiSamples": 506,
+      "failures": 10,
+      "meanMs": 9091.85,
+      "p95Ms": 17456,
+      "throughputPerSecond": 2.166
+    },
+    {
+      "label": "pool2-mixed30",
+      "path": "D:/Projects/PROJECTS 2.0/Committe MS/Test/CommitteeFlow_JMeter_Performance_Suite/performance-tests/results/07-CommitteeFlow-Realistic-Mixed-30-Users-20260912-195314/07-CommitteeFlow-Realistic-Mixed-30-Users.jtl",
+      "sha256": "20A9E40FD92381A236A623DCE515A4C91C51F9C93DCCAFB07FA90BF01A7F1720",
+      "apiSamples": 506,
+      "failures": 0,
+      "meanMs": 2522.62,
+      "p95Ms": 6042,
+      "throughputPerSecond": 4.333
+    },
+    {
+      "label": "pool2-mixed50",
+      "path": "D:/Projects/PROJECTS 2.0/Committe MS/Test/CommitteeFlow_JMeter_Performance_Suite/performance-tests/results/07-CommitteeFlow-Realistic-Mixed-50-Users-20260912-195743/07-CommitteeFlow-Realistic-Mixed-50-Users.jtl",
+      "sha256": "9B045672500B4FA5BC49152CAB19A6102DEEEF2B8E8737A29915DF26C1DE33D6",
+      "apiSamples": 843,
+      "failures": 0,
+      "meanMs": 5782.64,
+      "p95Ms": 12791,
+      "throughputPerSecond": 4.675
+    },
+    {
+      "label": "pool3-mixed50",
+      "path": "D:/Projects/PROJECTS 2.0/Committe MS/Test/CommitteeFlow_JMeter_Performance_Suite/performance-tests/results/07-CommitteeFlow-Realistic-Mixed-50-Users-20260912-200430/07-CommitteeFlow-Realistic-Mixed-50-Users.jtl",
+      "sha256": "4977E91DCC5F1B428F6ECE85D9ABADFEE4FB6922B54A567724ECF3C283CA1A91",
+      "apiSamples": 843,
+      "failures": 0,
+      "meanMs": 2159.34,
+      "p95Ms": 5363,
+      "throughputPerSecond": 6.091
+    },
+    {
+      "label": "pool3-worker-off-mixed30",
+      "path": "D:/Projects/PROJECTS 2.0/Committe MS/Test/CommitteeFlow_JMeter_Performance_Suite/performance-tests/results/07-CommitteeFlow-Realistic-Mixed-30-Users-20260912-200925/07-CommitteeFlow-Realistic-Mixed-30-Users.jtl",
+      "sha256": "CEC0B16C09FEDD77BD303EDE7BE293574DEE12AAB0321B4FF7C93769AFB27CC1",
+      "apiSamples": 506,
+      "failures": 0,
+      "meanMs": 1356.61,
+      "p95Ms": 2604,
+      "throughputPerSecond": 4.782,
+      "peakThreads": 23
+    },
+    {
+      "label": "pool3-worker-on-interrupted-mixed30",
+      "path": "D:/Projects/PROJECTS 2.0/Committe MS/Test/CommitteeFlow_JMeter_Performance_Suite/performance-tests/results/07-CommitteeFlow-Realistic-Mixed-30-Users-20260912-201859/07-CommitteeFlow-Realistic-Mixed-30-Users.jtl",
+      "sha256": "5C26CF13BBE800B7CED6B2A51D417C2CDF1303E233E7DA060A7C265656FB2866",
+      "totalRows": 956,
+      "apiSamples": 506,
+      "failures": 0,
+      "meanMs": 1208.77,
+      "p50Ms": 1099,
+      "p90Ms": 2078,
+      "p95Ms": 2494,
+      "p99Ms": 3067,
+      "maxMs": 3955,
+      "throughputPerSecond": 5.096,
+      "peakThreads": 24,
+      "httpStatusCounts": { "200": 443, "201": 3, "204": 30, "401": 30 },
+      "note": "All 401 samples were expected assertions; the SMTP drain was not allowed to complete."
+    }
+  ]
+}

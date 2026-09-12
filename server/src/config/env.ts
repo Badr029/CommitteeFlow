@@ -72,6 +72,7 @@ const envSchema = z.object({
   OUTBOX_RUN_BUDGET_MS: int(50_000).pipe(z.number().min(1000).max(240_000)),
   OUTBOX_LEASE_SECONDS: int(120).pipe(z.number().min(1).max(600)),
   OUTBOX_AMBIGUOUS_RETRY_SECONDS: int(900).pipe(z.number().min(60).max(86400)),
+  OUTBOX_PARENT_CONCURRENCY: int(2).pipe(z.number().min(1).max(5)),
 
   CLIENT_DIST_PATH: optionalString,
 }).refine((config) => config.OUTBOX_LEASE_SECONDS * 1000 > config.SMTP_SEND_TIMEOUT_MS + 10_000,

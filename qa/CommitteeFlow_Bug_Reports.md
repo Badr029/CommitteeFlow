@@ -1,8 +1,11 @@
 # CommitteeFlow — defect reports
 
 BUG-001–015 below retain their historical development/exploratory QA record.
-BUG-016 is the first deployed performance defect and remains open pending
-deployment and realistic retesting. See [retest plan](BUG-016-Retest.md).
+BUG-016 is the first deployed performance defect. Its corrected deployed retest
+is user-reported, but the after exports are not present in this checkout.
+BUG-017 is the subsequent outbox fairness defect; its correction is locally
+verified and awaits deployment/realistic retesting. See the
+[BUG-016](BUG-016-Retest.md) and [BUG-017](BUG-017-Retest.md) retest records.
 
 Fifteen defects on the Committee Plan, the sign-in screen, the import, the
 exports and the application shell. Each is something a user meets in the
@@ -535,7 +538,8 @@ Actual Result
 | BUG-013 | Export: the printed plan is not the form the plan is circulated on | Medium |
 | BUG-014 | Export: committee names outside Latin-1 reach the PDF as corrupted text | High |
 | BUG-015 | Committee Plan: minimising a day or session hides nothing | Medium |
-| BUG-016 | Notifications: deployed mixed workload delivers repeated booking emails (deployed retest pending) | High |
+| BUG-016 | Notifications: deployed mixed workload delivers repeated booking emails (reported corrected; closure exports missing) | High |
+| BUG-017 | Notifications: one large outbox parent starves independent notification events | High |
 
 Five of BUG-001 to BUG-006 are only visible under a condition an ordinary pass
 would miss: a long month, a dark system, a screen reader, a narrow screen, or a
@@ -584,10 +588,11 @@ needed a new case to find.
 
 ## BUG-016 — Notifications: deployed mixed workload delivers repeated booking emails
 
-Screenshot: `QA-Evidence/screenshots/BUG-016-mailpit-before.png` (requested, not supplied).
+Screenshots: `QA-Evidence/screenshots/BUG-016-outbox-before.png` (supplied);
+`QA-Evidence/screenshots/BUG-016-mailpit-before.png` (requested, not supplied).
 Measurements: `QA-Evidence/logs/BUG-016-observation.md`; `QA-Evidence/performance/BUG-016/manifest.json`.
 Database export: `QA-Evidence/logs/BUG-016-outbox-before.csv` (requested).
-Status: Open — implemented and locally verified; deployment and realistic retest pending.
+Status: Corrected deployed retest user-reported; portfolio-grade closure evidence incomplete.
 
 Priority
 
@@ -614,4 +619,58 @@ Actual Result
 * Total reported attempts match observed messages. The original database export is still pending; no database final state is represented as independently measured.
 * Source inspection confirms locks end before transmission and no durable claim prevents competing workers. SMTP acknowledgement ambiguity and large-recipient latency remain additional deployment hypotheses.
 
-Environment and evidence provenance are recorded in the observation and performance manifest. Local controlled reproduction and subsequent validation will be linked separately; they do not substitute for the deployed retest.
+Environment and evidence provenance are recorded in the observation and performance
+manifest. Local controlled reproduction does not substitute for deployment proof.
+A later clean three-event/33-child-batch result is user-reported, but the after
+database, Mailpit and worker exports are not present in this checkout.
+
+---
+
+## BUG-017 — Notifications: one large outbox parent starves independent notification events
+
+Screenshot: `QA-Evidence/screenshots/BUG-016-outbox-before.png` shows historical
+large-recipient parent rows but is contextual evidence, not a BUG-017 after image.
+Analysis: `QA-Evidence/logs/BUG-017-analysis.md`.
+Performance inventory: `QA-Evidence/performance/BUG-017/baseline-manifest.json`.
+Status: Local correction verified; deployed retest pending.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. Configure 50-recipient durable child batches, a 50-second worker budget and a
+   Cron invocation every 30 seconds.
+2. Queue a large notification parent A and one or more independent parents B/C.
+3. Run the pre-fix worker until it releases A after a successful child batch or
+   its invocation ends.
+4. Observe which parent the next claim selects and compare parent attempt counts
+   over successive invocations.
+
+Expected Result
+
+* Independent eligible parents make bounded progress while A is incomplete.
+* Created/updated/cancelled events for one booking retain their order.
+* Concurrency is bounded, and durable BUG-016 duplicate/retry protections remain
+  effective.
+
+Actual Result
+
+* The old worker drained one claimed parent inside an inner loop. If it stopped
+  before A completed, A retained the oldest `next_attempt_at` and was reclaimed
+  before untouched parents.
+* The pre-fix automated reproduction sent all three A batches before independent
+  B; the preserved assertion failed with B at index 3 and A's final batch at
+  index 2.
+* A supplied deployed observation reported parent 149 advancing while 150–157
+  remained at zero. The original export for that observation is not present, so
+  it remains user-provided rather than independently reproduced evidence.
+* The 30-second schedule is verified. Actual SMTP duration, Vercel execution
+  duration, budget-stop reason and Pinggy contribution were not captured, so
+  none is claimed as the confirmed cause.
+
+The local fix and exact deployment/retest procedure are in
+[`BUG-017-Retest.md`](BUG-017-Retest.md).

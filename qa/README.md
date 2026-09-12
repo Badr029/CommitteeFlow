@@ -3,15 +3,24 @@
 ## Current scope (2026-09-12)
 
 The register now covers development/exploratory defects and deployed performance
-defects. BUG-016 is open pending deployed verification. The older UI-only scope
-and counts below describe the original capture work, not the current register.
+defects. BUG-016 has a user-reported corrected deployed retest but lacks the
+after exports required for portfolio-grade closure. BUG-017's fairness correction
+is locally verified and awaits deployment/realistic SMTP retesting. The older
+UI-only scope and counts below describe the original capture work, not the
+current register.
 
 * [QA journey](CommitteeFlow_QA_Journey.md): chronology and lifecycle links.
 * [BUG-016 implementation/retest plan](BUG-016-Retest.md): migration, limits,
   evidence requests and remaining deployed checks.
+* [BUG-017 fairness/retest plan](BUG-017-Retest.md): confirmed scheduler cause,
+  bounded implementation, deployment sequence and pass/fail criteria.
 * `QA-Evidence/performance/BUG-016/`: sanitized JTL copies and original hashes.
+* `QA-Evidence/performance/BUG-017/`: read-only inventory and hashes for six
+  supplied performance runs; it does not claim SMTP completion.
 * `QA-Evidence/logs/BUG-016-*`: reported observation, real local reproduction
   and automated verification output. Failed intermediate runs are retained.
+* `QA-Evidence/logs/BUG-017-*`: failed pre-fix reproduction, causal analysis and
+  local verification. The pre-fix file is preserved unchanged.
 
 Preserve original evidence. The historical capture commands below can overwrite
 files; do not use them to replace before evidence. Capture new comparisons under

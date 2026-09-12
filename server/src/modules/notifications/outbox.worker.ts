@@ -1,4 +1,5 @@
 import { env } from '../../config/env.js';
+import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { logger } from '../../lib/logger.js';
 import { getMailer } from './mailer.js';
@@ -23,22 +24,54 @@ let running = false;
 export async function processOutboxBatch(): Promise<{ sent: number; failed: number }> {
   const config = env();
   const mailer = getMailer();
+  const runId = randomUUID();
   let sent = 0;
   let failed = 0;
+  let attemptsStarted = 0;
+  let budgetStopLogged = false;
+  const startedAt = performance.now();
   const deadline = performance.now() + config.OUTBOX_RUN_BUDGET_MS;
-  const hasTime = () => performance.now() + config.SMTP_SEND_TIMEOUT_MS + 5_000 < deadline;
+  const minimumStartBudgetMs = config.SMTP_SEND_TIMEOUT_MS + 5_000;
+  const remainingBudgetMs = () => Math.max(0, Math.round(deadline - performance.now()));
+  const hasTime = () => remainingBudgetMs() > minimumStartBudgetMs;
+  const logBudgetStop = () => {
+    if (budgetStopLogged) return;
+    budgetStopLogged = true;
+    logger.info({ runId, stopReason: 'RUN_BUDGET', remainingBudgetMs: remainingBudgetMs(),
+      minimumStartBudgetMs }, 'outbox worker stopped before another SMTP attempt');
+  };
+  const reserveAttempt = () => {
+    if (!hasTime()) { logBudgetStop(); return false; }
+    if (attemptsStarted >= config.OUTBOX_BATCH_SIZE) return false;
+    attemptsStarted++;
+    return true;
+  };
 
-  for (let i = 0; i < config.OUTBOX_BATCH_SIZE && hasTime(); i++) {
-    const message = await outbox.claimMessage();
-    if (!message) break;
-    // Rendering/DB errors retain the lease for recovery; never retry SMTP here.
-    const payload = message.payload as unknown as NotificationPayload;
-    const rendered = renderEmail(payload, planUrlFor(payload));
-    while (hasTime()) {
+  const processLane = async (lane: number) => {
+    while (hasTime() && attemptsStarted < config.OUTBOX_BATCH_SIZE) {
+      const message = await outbox.claimMessage();
+      if (!message) break;
+      // Rendering/DB errors retain the lease for recovery; never retry SMTP here.
+      const payload = message.payload as unknown as NotificationPayload;
+      const rendered = renderEmail(payload, planUrlFor(payload));
+      if (!reserveAttempt()) {
+        await outbox.releaseMessage(message);
+        break;
+      }
       const batch = await outbox.beginBatch(message);
-      if (!batch) break;
+      if (!batch) {
+        attemptsStarted--;
+        await outbox.releaseMessage(message);
+        continue;
+      }
       let remaining = batch.remaining_recipients;
       let failure: 'SMTP_REJECTED' | 'DELIVERY_UNKNOWN' | null = null;
+      const smtpStartedAt = performance.now();
+      logger.info({ runId, lane, outboxId: message.id, eventType: message.event_type,
+        batch: batch.batch_no, attempt: batch.attempt_count,
+        recipientCount: batch.remaining_recipients.length,
+        queueWaitMs: Math.max(0, message.claimed_at.getTime() - message.created_at.getTime()),
+        remainingBudgetMs: remainingBudgetMs() }, 'notification SMTP attempt started');
       try {
         const result = await mailer.send({
           to: batch.remaining_recipients,
@@ -52,20 +85,40 @@ export async function processOutboxBatch(): Promise<{ sent: number; failed: numb
       } catch (error) {
         failure = classifyDeliveryFailure(error);
       }
+      const smtpDurationMs = Math.max(0, Math.round(performance.now() - smtpStartedAt));
       // Outside the SMTP catch: a failed acknowledgement write is ambiguous,
       // not an SMTP rejection. Recovery observes the durable in_flight marker.
       const complete = await outbox.finishBatch(message, batch, remaining, failure);
+      logger.info({ runId, lane, outboxId: message.id, eventType: message.event_type,
+        batch: batch.batch_no, attempt: batch.attempt_count,
+        recipientCount: batch.remaining_recipients.length,
+        remainingRecipientCount: remaining.length, smtpDurationMs,
+        outcome: failure ?? 'SENT', parentComplete: complete,
+        remainingBudgetMs: remainingBudgetMs() }, 'notification SMTP attempt finished');
       if (failure) {
         failed++;
-        logger.warn({ outboxId: message.id, batch: batch.batch_no,
+        logger.warn({ runId, outboxId: message.id, batch: batch.batch_no,
           attempt: batch.attempt_count, failure }, 'notification delivery deferred');
-        break;
+      } else if (complete) {
+        sent++;
       }
-      if (complete) { sent++; break; }
+      // Release after one child batch so another eligible parent gets a turn.
+      // A failed acknowledgement write throws before this point and retains the
+      // durable in-flight marker/lease for conservative recovery.
+      await outbox.releaseMessage(message);
     }
-    await outbox.releaseMessage(message);
-  }
-  if (sent || failed) logger.info({ sent, failed, transport: mailer.mode }, 'outbox batch processed');
+    if (!hasTime()) logBudgetStop();
+  };
+
+  const lanes = await Promise.allSettled(Array.from(
+    { length: config.OUTBOX_PARENT_CONCURRENCY }, (_, lane) => processLane(lane + 1)));
+  const rejected = lanes.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+  if (rejected) throw rejected.reason;
+  if (attemptsStarted || failed) logger.info({ runId, sent, failed, attemptsStarted,
+    parentConcurrency: config.OUTBOX_PARENT_CONCURRENCY,
+    durationMs: Math.max(0, Math.round(performance.now() - startedAt)),
+    stopReason: !hasTime() ? 'RUN_BUDGET' : attemptsStarted >= config.OUTBOX_BATCH_SIZE
+      ? 'ATTEMPT_LIMIT' : 'NO_ELIGIBLE_WORK', transport: mailer.mode }, 'outbox batch processed');
   return { sent, failed };
 }
 

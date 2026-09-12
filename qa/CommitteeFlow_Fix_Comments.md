@@ -383,3 +383,38 @@ could not have caught this. The guard is in the browser harness instead. Nothing
 else in the application currently sets a display value on an element it also
 hides, so the reset changes no other component's rendering.
 ```
+
+---
+
+## BUG-016 — evidence status correction
+
+The corrected deployed lifecycle (three events and 33 durable child batches) is
+reported as having completed without the old duplicate pattern. This checkout
+does not contain the after database, Mailpit or worker exports, deployed build ID
+or exact elapsed timestamps. Keep the issue evidence-controlled rather than
+marking it portfolio-verified from this repository alone.
+
+---
+
+## BUG-017 — local correction prepared; deployed retest pending
+
+```
+fix: rotate durable outbox parents fairly without breaking booking event order
+
+* Each successful child batch is one scheduling quantum. An unfinished parent
+  is returned behind older eligible parents rather than monopolising successive
+  claims.
+* Two bounded lanes per invocation allow independent booking scopes to progress.
+* A lower-ID unfinished event blocks later events for the same booking; NULL
+  booking events use one conservative plan-wide ordering scope.
+* Existing leases, persistent child batches, retry counters, stable Message-IDs,
+  partial-acceptance handling and acknowledgement fencing are preserved.
+* Safe structured logs now expose lane, parent, child, queue wait, SMTP duration,
+  remaining budget, outcome and stop reason without addresses or message data.
+
+Local retest: the pre-fix test failed with independent B after A's final batch.
+After the change, 45 focused tests passed; the complete suites passed 335 server
+tests and 83 client tests with four pre-existing skips. Typecheck, lint,
+production build, migration compatibility, Compose configuration and diff check
+passed. No deployment or external SMTP retest was performed.
+```

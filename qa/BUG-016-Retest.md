@@ -1,9 +1,12 @@
 # BUG-016 — delivery correction and retest procedure
 
-Status: implementation prepared; deployed defect remains OPEN. No deployment,
-Supabase/Cron/Vercel changes or messages to real recipients were performed.
-Do not add a successful closure to the fix-comment register until the deployed
-checks below pass. Automated evidence is distinct from manual/deployed evidence.
+Status: local implementation verified. A corrected deployed three-event,
+33-child-batch retest is user-reported, but its after database/Mailpit/worker
+exports, deployed build ID and exact elapsed timestamps are not present in this
+checkout. Treat closure as evidence-incomplete. No deployment,
+Supabase/Cron/Vercel changes or messages to real recipients were performed in
+the repository work recorded here. Automated evidence remains distinct from
+manual/deployed evidence.
 
 Local results: 327 server tests passed, four real-workbook tests skipped because
 the optional workbook fixture was unavailable; all 83 client tests passed.
