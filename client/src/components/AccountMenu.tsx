@@ -1,29 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import { KeyRound, LogOut, Moon, Sun, UserRound, X } from 'lucide-react';
+import { KeyRound, LogOut, UserRound, X } from 'lucide-react';
 import type { SessionResponse } from '@shared/api-types';
 import { useLogout } from '@/api/queries';
-import type { Theme } from '@/lib/theme';
 import { Button } from './ui/Button';
 import styles from './AppShell.module.css';
 
 /**
  * Account menu (phone only).
  *
- * On desktop the identity, the theme switch and sign-out all sit in the top
- * bar. A 375px bar has no room for them, so they move behind one control —
- * which is also where the signed-in name and role live, since a shared works
- * tablet makes "who am I signed in as" a real question.
+ * The menu holds account-specific actions only. Theme remains a persistent
+ * top-bar control so it never depends on opening the identity menu.
  */
 export function AccountMenu({
   session,
-  theme,
-  onToggleTheme,
   onChangePassword,
   desktop = false,
 }: {
   session: SessionResponse;
-  theme: Theme;
-  onToggleTheme: () => void;
   onChangePassword: () => void;
   desktop?: boolean;
 }) {
@@ -92,19 +85,6 @@ export function AccountMenu({
               onClick={() => { onChangePassword(); setOpen(false); }}>
               <KeyRound size={16} />
               Change password
-            </button>
-
-            <button
-              type="button"
-              role="menuitem"
-              className={styles.accountItem}
-              onClick={() => {
-                onToggleTheme();
-                setOpen(false);
-              }}
-            >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             </button>
 
             <button

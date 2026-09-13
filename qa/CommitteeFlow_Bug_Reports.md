@@ -3,12 +3,13 @@
 BUG-001–015 below retain their historical development/exploratory QA record.
 BUG-016 is the first deployed performance defect. Its corrected deployed retest
 is user-reported, but the after exports are not present in this checkout.
-BUG-017 is the subsequent outbox fairness defect; its correction is locally
-verified and awaits deployment/realistic retesting. See the
+BUG-017 is the subsequent outbox fairness defect. Its deployed retest is recorded
+as passed from the product owner's final SQL/Mailpit review; the raw after exports
+and exact timing values are not present in this checkout. See the
 [BUG-016](BUG-016-Retest.md) and [BUG-017](BUG-017-Retest.md) retest records.
 
-Fifteen defects on the Committee Plan, the sign-in screen, the import, the
-exports and the application shell. Each is something a user meets in the
+The register covers defects on the Committee Plan, sign-in, account security,
+import, exports, notifications and the application shell. Each is something a user meets in the
 interface, so each is reproducible black-box: no source access, no database, no
 container.
 
@@ -540,6 +541,15 @@ Actual Result
 | BUG-015 | Committee Plan: minimising a day or session hides nothing | Medium |
 | BUG-016 | Notifications: deployed mixed workload delivers repeated booking emails (reported corrected; closure exports missing) | High |
 | BUG-017 | Notifications: one large outbox parent starves independent notification events | High |
+| BUG-018 | Sign in: protected-plan skeleton flashes before authentication resolves | Medium |
+| BUG-019 | Sign in: successful login loses the requested route and query | High |
+| BUG-020 | Committee Plan: search field renders two clear controls | Low |
+| BUG-021 | Account security: temporary password is not replaced on first login | High |
+| BUG-022 | Account security: signed-in user cannot change their password | High |
+| BUG-023 | Booking: past Cairo dates and times can be selected | High |
+| BUG-024 | Committee Plan: elapsed days crowd the current-month default view | Medium |
+| BUG-025 | Committee Plan: cancelled bookings are hidden by default | Medium |
+| BUG-026 | Authentication: session is not retained as the user expects across mobile entry points | High |
 
 Five of BUG-001 to BUG-006 are only visible under a condition an ordinary pass
 would miss: a long month, a dark system, a screen reader, a narrow screen, or a
@@ -632,7 +642,8 @@ Screenshot: `QA-Evidence/screenshots/BUG-016-outbox-before.png` shows historical
 large-recipient parent rows but is contextual evidence, not a BUG-017 after image.
 Analysis: `QA-Evidence/logs/BUG-017-analysis.md`.
 Performance inventory: `QA-Evidence/performance/BUG-017/baseline-manifest.json`.
-Status: Local correction verified; deployed retest pending.
+Status: Deployed retest passed by product-owner review; raw closure exports and
+exact timing measurements are missing from this checkout.
 
 Priority
 
@@ -678,3 +689,251 @@ independent parents and drains each in three-child waves, with a default maximum
 of six concurrent SMTP sends per invocation. Migration `1700000000008` adds an
 asynchronous Supabase `pg_net` wake; the existing 30-second Cron remains the
 recovery fallback.
+
+Deployed retest result reported on 2026-09-13: all nine parent rows reached
+`SENT`; all 99 expected durable child batches completed; no duplicate delivery
+was observed; and CREATED → UPDATED → CANCELLED ordering remained intact within
+each booking. This satisfies the agreed functional pass criteria. These results
+are user-attested because the final SQL export, worker log, Mailpit export, build
+ID and exact start/end timings were not added to this checkout. Do not present
+the missing timing values as measured portfolio evidence.
+
+---
+
+## BUG-018 — Sign in: protected-plan skeleton flashes before authentication resolves
+
+Evidence: user-supplied `C:/Users/pc/Pictures/Screenshots/Screenshot (392).png`.
+Status: Fixed locally; deployed retest pending.
+
+Priority
+
+Medium
+
+Description
+
+Steps to Reproduce
+
+1. Open `/` while signed out or with an expired session.
+2. Observe the page before the sign-in form appears.
+
+Expected Result
+
+* Authentication loading uses a sign-in-shaped skeleton and exposes no plan data shape.
+
+Actual Result
+
+* The protected Committee Plan skeleton flashes before sign-in.
+
+---
+
+## BUG-019 — Sign in: successful login loses the requested route and query
+
+Evidence: user-supplied `C:/Users/pc/Pictures/Screenshots/Screenshot (391).png`.
+Status: Fixed locally; automated route/query regression passed; deployed retest pending.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. While signed out, open a protected route containing query parameters.
+2. Sign in.
+
+Expected Result
+
+* Continue to the exact requested pathname and query string.
+
+Actual Result
+
+* The sign-in page retains a plan URL, then successful login can open a different/default location.
+
+---
+
+## BUG-020 — Committee Plan: search field renders two clear controls
+
+Evidence: user-supplied `C:/Users/pc/Pictures/Screenshots/Screenshot (399).png`.
+Status: Fixed locally; deployed retest pending.
+
+Priority
+
+Low
+
+Description
+
+Steps to Reproduce
+
+1. Enter text in the Committee Plan search input.
+2. Hover the right edge of the input.
+
+Expected Result
+
+* One visible clear action is available.
+
+Actual Result
+
+* The custom clear action and browser-native search cancellation control overlap.
+
+---
+
+## BUG-021 — Account security: temporary password is not replaced on first login
+
+Status: Fixed locally; client regression passed; server integration retest pending local database availability.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. Create a user with the administration script and a temporary password.
+2. Sign in for the first time.
+
+Expected Result
+
+* A non-dismissible replacement dialog requires a policy-compliant private password.
+* The first-login form does not ask for the already authenticated temporary password.
+* New and confirmation values can be revealed for typo checking.
+
+Actual Result
+
+* The user can continue using the administrator-known temporary password.
+
+---
+
+## BUG-022 — Account security: signed-in user cannot change their password
+
+Status: Fixed locally; client regression passed; server integration retest pending local database availability.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. Sign in with a permanent password.
+2. Open the account identity menu.
+
+Expected Result
+
+* Change password is available and requires the current password.
+* The dialog has one Cancel action and no duplicate close icon.
+
+Actual Result
+
+* No password-change action is available to the user.
+
+---
+
+## BUG-023 — Booking: past Cairo dates and times can be selected
+
+Status: Fixed locally; automated regression covered; deployed retest pending.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. Open Book Committee Slot.
+2. Select a date/time earlier than now in `Africa/Cairo`.
+3. Submit.
+
+Expected Result
+
+* Client and server reject any past Cairo date/time without exemptions.
+
+Actual Result
+
+* A past booking can be created.
+
+---
+
+## BUG-024 — Committee Plan: elapsed days crowd the current-month default view
+
+Status: Fixed locally; automated regression covered; deployed retest pending.
+
+Priority
+
+Medium
+
+Description
+
+Steps to Reproduce
+
+1. Open the current month after one or more days have elapsed.
+
+Expected Result
+
+* The current month starts at today by default, with **Show past days** available.
+* Other months remain complete.
+
+Actual Result
+
+* Elapsed days are shown by default, pushing current work down the plan.
+
+---
+
+## BUG-025 — Committee Plan: cancelled bookings are hidden by default
+
+Status: Fixed locally; automated regression covered; deployed retest pending.
+
+Priority
+
+Medium
+
+Description
+
+Steps to Reproduce
+
+1. Open a month containing cancelled bookings.
+
+Expected Result
+
+* Cancelled bookings are visible by default; **Hide cancelled** removes them on demand.
+
+Actual Result
+
+* Cancelled work is omitted until the user explicitly reveals it.
+
+---
+
+## BUG-026 — Authentication: session is not retained as expected across mobile entry points
+
+Status: Keep-me-signed-in correction implemented locally; deployed same-browser
+and mobile retest pending.
+
+Priority
+
+High
+
+Description
+
+Steps to Reproduce
+
+1. Sign in on mobile.
+2. Open CommitteeFlow in another tab/window, reopen the browser, or follow an email link.
+
+Expected Result
+
+* Same-browser tabs/windows share the authenticated cookie.
+* Selecting **Keep me signed in** persists the session for a rolling 30 days.
+* If an email app opens an isolated in-app browser, login returns to the exact email destination.
+
+Actual Result
+
+* The user reports being asked to sign in again outside the original window.
+
+Technical boundary
+
+* A site cannot copy cookies into an email application's isolated webview. That
+  case must be retested separately and may require **Open in browser**; it is not
+  claimed fixed by a persistent cookie alone.

@@ -10,7 +10,7 @@ import styles from './LoginPage.module.css';
  */
 export function AppBooting() {
   return (
-    <div className={styles.page} aria-busy="true" aria-label="Loading CommitteeFlow">
+    <div className={styles.page} aria-busy="true" aria-label="Loading sign in">
       <header className={styles.topline}>
         <BrandMark />
         <span className={styles.brandName}>CommitteeFlow</span>

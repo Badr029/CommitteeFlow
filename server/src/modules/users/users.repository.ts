@@ -209,7 +209,11 @@ export async function countUsers(executor?: Queryable): Promise<number> {
  * Deactivated accounts are left out: they cannot sign in, so listing them would
  * only invite someone to grant access that does nothing.
  */
-export async function listAccountsForAccess(executor?: Queryable): Promise<
+export async function listAccountsForAccess(
+  limit: number,
+  offset: number,
+  executor?: Queryable,
+): Promise<
   Array<{
     id: string;
     name: string;
@@ -223,10 +227,20 @@ export async function listAccountsForAccess(executor?: Queryable): Promise<
             can_manage_plan_configuration AS "canManagePlanConfiguration"
        FROM users
       WHERE is_active
-      ORDER BY can_manage_plan_configuration DESC, name`,
+      ORDER BY can_manage_plan_configuration DESC, name, id
+      LIMIT $1 OFFSET $2`,
+    [limit, offset],
+    executor,
+  );
+}
+
+export async function countActiveUsers(executor?: Queryable): Promise<number> {
+  const row = await queryOne<{ count: number }>(
+    'SELECT count(*)::int AS count FROM users WHERE is_active',
     [],
     executor,
   );
+  return row?.count ?? 0;
 }
 
 /** How many people can still reach Plan Configuration. Guards the last one. */

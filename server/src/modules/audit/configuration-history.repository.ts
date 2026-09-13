@@ -99,3 +99,12 @@ export async function listConfigurationHistory(
     changedAt: row.changed_at.toISOString(),
   }));
 }
+
+export async function countConfigurationHistory(executor?: Queryable): Promise<number> {
+  const row = await queryOne<{ count: number }>(
+    'SELECT count(*)::int AS count FROM configuration_history',
+    [],
+    executor,
+  );
+  return row?.count ?? 0;
+}

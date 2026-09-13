@@ -49,6 +49,7 @@ export function LoginPage({
     const data = new FormData(event.currentTarget);
     const submittedEmail = String(data.get('email') ?? '').trim();
     const submittedPassword = String(data.get('password') ?? '');
+    const rememberMe = data.get('rememberMe') === 'on';
 
     if (!submittedEmail || !submittedPassword) {
       setMissing(
@@ -63,7 +64,7 @@ export function LoginPage({
 
     setMissing(null);
     login.mutate(
-      { email: submittedEmail, password: submittedPassword },
+      { email: submittedEmail, password: submittedPassword, rememberMe },
       {
         onSuccess: (session) => {
           navigate(returnToFromState(location.state), { replace: true });
@@ -162,6 +163,14 @@ export function LoginPage({
                 </div>
               )}
             </Field>
+
+            <label className={styles.remember}>
+              <input type="checkbox" name="rememberMe" />
+              <span>
+                <strong>Keep me signed in</strong>
+                <small>Use only on a private device.</small>
+              </span>
+            </label>
 
             {/*
               * Never disabled on emptiness. A disabled control cannot explain

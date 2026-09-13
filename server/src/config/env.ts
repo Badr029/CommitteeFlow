@@ -47,6 +47,7 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(16, 'SESSION_SECRET must be at least 16 characters'),
   SESSION_NAME: z.string().default('committeeflow.sid'),
   SESSION_TTL_HOURS: int(12),
+  REMEMBER_ME_TTL_DAYS: int(30).pipe(z.number().min(1).max(365)),
   COOKIE_SECURE: bool.default(false),
   COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
 

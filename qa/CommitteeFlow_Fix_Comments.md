@@ -396,7 +396,7 @@ marking it portfolio-verified from this repository alone.
 
 ---
 
-## BUG-017 — refined local correction prepared; deployed retest pending
+## BUG-017 — refined correction; deployed functional retest passed
 
 ```
 fix: drain independent outbox parents with bounded child concurrency
@@ -413,6 +413,38 @@ fix: drain independent outbox parents with bounded child concurrency
 
 Local retest: the pre-fix test failed with independent B after A's final batch.
 After the refined change, the complete suites passed 338 server tests and 86
-client tests with four pre-existing skips. No deployment or external SMTP retest
-was performed.
+client tests with four pre-existing skips.
+
+Deployed retest (product-owner review, 2026-09-13): nine of nine parents `SENT`,
+99 expected children complete, no duplicate observed, and same-booking lifecycle
+order retained. Functional result: PASS. Exact timings and raw after exports are
+not present in this checkout and remain excluded from verified portfolio numbers.
+```
+
+---
+
+## BUG-018 to BUG-026 — authentication and plan refinements
+
+```
+fix: harden sign-in, account security and plan defaults
+
+* Replaced the protected-plan startup skeleton with a sign-in-shaped skeleton.
+* Preserved the requested pathname and query string through login.
+* Suppressed the browser-native search cancellation control so only one clear action remains.
+* Required script-created accounts to replace the temporary password before app access.
+* Removed Current password from first-login replacement only; normal Change password still verifies it.
+* Added reveal controls for replacement fields and retained Cancel as the normal dialog's only close action.
+* Added Change password to the account menu while leaving the dark-mode switch outside that menu.
+* Rejected past booking dates/times against Africa/Cairo on client and server.
+* Hid elapsed days by default only in the current month; Show past days restores them.
+* Made cancelled bookings visible by default; Hide cancelled reverses the filter.
+* Paginated Who can configure the plan and Configuration history independently.
+* Added optional Keep me signed in: session-only when clear, rolling 30 days when selected.
+* Preserved the persistence choice through first-login password replacement and session-ID rotation.
+
+Local evidence: typecheck, lint and build pass; 29 targeted client tests and 108
+server unit tests pass (three skipped). Server
+integration execution is pending because Docker/PostgreSQL was unavailable in
+the continuation session. Same-browser mobile, browser-restart and email-link
+deployment checks remain pending.
 ```

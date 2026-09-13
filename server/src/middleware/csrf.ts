@@ -28,7 +28,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   return crypto.timingSafeEqual(bufferA, bufferB);
 }
 
-export function issueCsrfCookie(res: Response, token: string): void {
+export function issueCsrfCookie(res: Response, token: string, rememberMe = false): void {
   const config = env();
   res.cookie(CSRF_COOKIE, token, {
     // Intentionally readable by the SPA — the secret's protection is that a
@@ -37,7 +37,9 @@ export function issueCsrfCookie(res: Response, token: string): void {
     secure: config.COOKIE_SECURE,
     sameSite: config.COOKIE_SAMESITE,
     path: '/',
-    maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
+    ...(rememberMe
+      ? { maxAge: config.REMEMBER_ME_TTL_DAYS * 24 * 60 * 60 * 1000 }
+      : {}),
   });
 }
 
@@ -49,7 +51,7 @@ export const attachCsrfToken: RequestHandler = (req, res, next) => {
     req.session.csrfToken = generateCsrfToken();
   }
   if (req.cookies?.[CSRF_COOKIE] !== req.session.csrfToken) {
-    issueCsrfCookie(res, req.session.csrfToken);
+    issueCsrfCookie(res, req.session.csrfToken, req.session.rememberMe);
   }
   next();
 };

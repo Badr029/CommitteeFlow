@@ -23,6 +23,8 @@ declare module "express-session" {
     csrfToken?: string;
     /** Rotated on login so a pre-auth session id cannot be fixed onto a user. */
     loggedInAt?: string;
+    /** Whether this browser explicitly requested a persistent login cookie. */
+    rememberMe?: boolean;
   }
 }
 
@@ -40,6 +42,8 @@ export function buildSessionMiddleware(): RequestHandler {
       // The schema is owned by our migrations, not by the store.
       createTableIfMissing: false,
       pruneSessionInterval: 60 * 15,
+      // Session-only browser cookies still need a bounded server-side lifetime.
+      ttl: config.SESSION_TTL_HOURS * 60 * 60,
     }),
     resave: false,
     saveUninitialized: false,
@@ -49,10 +53,23 @@ export function buildSessionMiddleware(): RequestHandler {
       httpOnly: true,
       secure: config.COOKIE_SECURE,
       sameSite: config.COOKIE_SAMESITE,
-      maxAge: config.SESSION_TTL_HOURS * 60 * 60 * 1000,
       path: "/",
     },
   });
+}
+
+export function applySessionPersistence(
+  activeSession: import("express-session").Session &
+    Partial<import("express-session").SessionData>,
+  rememberMe: boolean,
+): void {
+  activeSession.rememberMe = rememberMe;
+  if (rememberMe) {
+    activeSession.cookie.maxAge = env().REMEMBER_ME_TTL_DAYS * 24 * 60 * 60 * 1000;
+  } else {
+    activeSession.cookie.expires = undefined;
+    activeSession.cookie.originalMaxAge = null;
+  }
 }
 
 export function generateCsrfToken(): string {
@@ -81,12 +98,14 @@ export async function regenerateSession(req: {
     Partial<import("express-session").SessionData>;
 }): Promise<void> {
   const csrfToken = req.session.csrfToken;
+  const rememberMe = req.session.rememberMe ?? false;
   await new Promise<void>((resolve, reject) => {
     req.session.regenerate((error) =>
       error ? reject(asError(error, "regenerate")) : resolve(),
     );
   });
   req.session.csrfToken = csrfToken ?? generateCsrfToken();
+  applySessionPersistence(req.session, rememberMe);
 }
 
 export async function destroySession(req: {

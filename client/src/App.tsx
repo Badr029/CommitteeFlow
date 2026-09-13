@@ -27,8 +27,9 @@ export function App() {
   const location = useLocation();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
-  // The whole app depends on knowing who is asking, so the first load renders
-  // a skeleton of the plan rather than an empty screen or a spinner.
+  // The whole app depends on knowing who is asking, so startup renders the
+  // sign-in page skeleton until the session check resolves. Protected plan
+  // content is never hinted at before authentication is known.
   if (session.isPending) {
     return <AppBooting />;
   }

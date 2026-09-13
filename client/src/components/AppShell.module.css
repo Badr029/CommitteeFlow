@@ -96,7 +96,15 @@
 .barRight {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2);
+}
+
+.themeToggle { flex: none; }
+
+.themeToggleMobile {
+  flex: none;
+  width: var(--tap-min);
+  height: var(--tap-min);
 }
 
 .identity {

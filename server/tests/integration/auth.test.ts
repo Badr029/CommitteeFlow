@@ -78,7 +78,6 @@ describe('authentication and session security', () => {
     expect(blocked.body.error.message).toMatch(/temporary password/i);
 
     const changed = await session.post('/api/auth/change-password', {
-      currentPassword: TEST_PASSWORD,
       newPassword: 'PrivatePassword!2026',
     });
     expect(changed.status).toBe(200);
@@ -86,8 +85,8 @@ describe('authentication and session security', () => {
     expect((await session.get('/api/bookings?month=2026-10')).status).toBe(200);
   });
 
-  it('enforces current-password verification and the complete password policy', async () => {
-    const user = await createUser({ role: 'VIEWER', mustChangePassword: true });
+  it('enforces current-password verification and the complete password policy for normal changes', async () => {
+    const user = await createUser({ role: 'VIEWER' });
     const session = new Session();
     await session.login(user.email);
 
@@ -98,13 +97,21 @@ describe('authentication and session security', () => {
     expect(wrongCurrent.status).toBe(422);
     expect(wrongCurrent.body.error.issues[0].field).toBe('currentPassword');
 
+    const missingCurrent = await session.post('/api/auth/change-password', {
+      newPassword: 'PrivatePassword!2026',
+    });
+    expect(missingCurrent.status).toBe(422);
+    expect(missingCurrent.body.error.issues[0]).toMatchObject({
+      field: 'currentPassword',
+      message: 'Enter your current password.',
+    });
+
     const weak = await session.post('/api/auth/change-password', {
       currentPassword: TEST_PASSWORD,
       newPassword: 'onlylowercase',
     });
     expect(weak.status).toBe(422);
     expect(weak.body.error.issues[0].field).toBe('newPassword');
-    expect((await session.get('/api/bookings?month=2026-10')).status).toBe(403);
   });
 
   it('sets an HttpOnly, SameSite session cookie', async () => {
@@ -118,6 +125,31 @@ describe('authentication and session security', () => {
     expect(sessionCookie).toContain('HttpOnly');
     expect(sessionCookie).toContain('SameSite=Lax');
     expect(sessionCookie).toContain('Path=/');
+    expect(sessionCookie).not.toContain('Expires=');
+  });
+
+  it('keeps a remembered session across browser restarts and session-id rotation', async () => {
+    const user = await createUser({ role: 'VIEWER', mustChangePassword: true });
+    const session = new Session();
+    const login = await session.login(user.email, TEST_PASSWORD, true);
+
+    const loginCookies = login.headers['set-cookie'] as unknown as string[];
+    expect(loginCookies.find((cookie) => cookie.startsWith('committeeflow.sid=')))
+      .toContain('Expires=');
+
+    // A separate browser request carrying the cookie can recover the session.
+    const separateRequest = await request(testApp())
+      .get('/api/auth/session')
+      .set('Cookie', session.cookieHeader);
+    expect(separateRequest.status).toBe(200);
+    expect(separateRequest.body.user.email).toBe(user.email);
+
+    const changed = await session.post('/api/auth/change-password', {
+      newPassword: 'PrivatePassword!2026',
+    });
+    const rotatedCookies = changed.headers['set-cookie'] as unknown as string[];
+    expect(rotatedCookies.find((cookie) => cookie.startsWith('committeeflow.sid=')))
+      .toContain('Expires=');
   });
 
   it('gives the same answer for a wrong password and an unknown account', async () => {

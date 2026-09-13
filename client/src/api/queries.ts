@@ -42,9 +42,9 @@ export const keys = {
   sessionPreview: (date: string, time: string, committee: string) =>
     ['session-preview', date, time, committee] as const,
   activity: (page: number, limit: number) => ['activity', page, limit] as const,
-  configHistory: ['config-history'] as const,
+  configHistory: (page: number, limit: number) => ['config-history', page, limit] as const,
   imports: ['imports'] as const,
-  planAccess: ['plan-access'] as const,
+  planAccess: (page: number, limit: number) => ['plan-access', page, limit] as const,
 };
 
 /** How often the plan quietly re-checks for other people's changes. */
@@ -75,7 +75,7 @@ export function useSession() {
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (credentials: { email: string; password: string }) =>
+    mutationFn: (credentials: { email: string; password: string; rememberMe?: boolean }) =>
       api.post<SessionResponse>('/api/auth/login', credentials),
     onSuccess: (session) => {
       queryClient.setQueryData(keys.session, session);
@@ -87,7 +87,7 @@ export function useLogin() {
 export function useChangePassword() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { currentPassword: string; newPassword: string }) =>
+    mutationFn: (input: { currentPassword?: string; newPassword: string }) =>
       api.post<SessionResponse>('/api/auth/change-password', input),
     onSuccess: (session) => {
       queryClient.setQueryData(keys.session, session);
@@ -157,7 +157,7 @@ function usePlanConfigMutation<TArgs, TResult>(
       // A configuration change reshapes the table, the form and the exports,
       // so everything downstream of it is dropped.
       void queryClient.invalidateQueries({ queryKey: keys.planFields });
-      void queryClient.invalidateQueries({ queryKey: keys.configHistory });
+      void queryClient.invalidateQueries({ queryKey: ['config-history'] });
       void queryClient.invalidateQueries({ queryKey: ['bookings'] });
       options?.onSuccess?.(...args);
     },
@@ -208,11 +208,11 @@ export function useUpdateSettings() {
  * addresses — so it is fetched by the Plan Configuration screen and nowhere
  * else.
  */
-export function usePlanAccess() {
+export function usePlanAccess(page: number, limit = 25) {
   return useQuery({
-    queryKey: keys.planAccess,
-    queryFn: () => api.get<PlanAccessResponse>('/api/users'),
-    select: (data) => data.users,
+    queryKey: keys.planAccess(page, limit),
+    queryFn: () => api.get<PlanAccessResponse>(`/api/users?page=${page}&limit=${limit}`),
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -226,8 +226,8 @@ export function useSetPlanAccess() {
     mutationFn: ({ id, canManagePlanConfiguration }) =>
       api.patch<PlanAccessUser>(`/api/users/${id}/plan-access`, { canManagePlanConfiguration }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: keys.planAccess });
-      void queryClient.invalidateQueries({ queryKey: keys.configHistory });
+      void queryClient.invalidateQueries({ queryKey: ['plan-access'] });
+      void queryClient.invalidateQueries({ queryKey: ['config-history'] });
       // Revoking your own access is refused, but granting it changes what the
       // person doing it sees on their next navigation.
       void queryClient.invalidateQueries({ queryKey: keys.session });
@@ -235,14 +235,15 @@ export function useSetPlanAccess() {
   });
 }
 
-export function useConfigurationHistory(enabled: boolean) {
+export function useConfigurationHistory(enabled: boolean, page: number, limit = 25) {
   return useQuery({
-    queryKey: keys.configHistory,
+    queryKey: keys.configHistory(page, limit),
     queryFn: () =>
-      api.get<{ entries: ConfigurationHistoryEntry[]; hasMore: boolean }>(
-        '/api/plan-fields/history?limit=50',
+      api.get<{ entries: ConfigurationHistoryEntry[]; page: number; limit: number; total: number; hasMore: boolean }>(
+        `/api/plan-fields/history?page=${page}&limit=${limit}`,
       ),
     enabled,
+    placeholderData: (previous) => previous,
   });
 }
 

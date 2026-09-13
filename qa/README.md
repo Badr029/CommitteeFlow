@@ -1,11 +1,13 @@
 # QA
 
-## Current scope (2026-09-12)
+## Current scope (2026-09-13)
 
 The register now covers development/exploratory defects and deployed performance
 defects. BUG-016 has a user-reported corrected deployed retest but lacks the
-after exports required for portfolio-grade closure. BUG-017's fairness correction
-is locally verified and awaits deployment/realistic SMTP retesting. The older
+after exports required for portfolio-grade closure. BUG-017's functional deployed
+retest passed by product-owner review, but raw after exports and exact timings are
+not in this checkout. BUG-018–026 cover the latest authentication and plan fixes.
+The older
 UI-only scope and counts below describe the original capture work, not the
 current register.
 
@@ -21,6 +23,8 @@ current register.
   and automated verification output. Failed intermediate runs are retained.
 * `QA-Evidence/logs/BUG-017-*`: failed pre-fix reproduction, causal analysis and
   local verification. The pre-fix file is preserved unchanged.
+* `QA-Evidence/logs/BUG-018-026-verification.md`: evidence boundary and latest
+  local validation for the authentication and plan refinements.
 
 Preserve original evidence. The historical capture commands below can overwrite
 files; do not use them to replace before evidence. Capture new comparisons under

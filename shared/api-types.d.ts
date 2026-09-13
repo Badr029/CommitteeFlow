@@ -62,6 +62,11 @@ export interface PlanAccessUser {
 
 export interface PlanAccessResponse {
   users: PlanAccessUser[];
+  page: number;
+  limit: number;
+  total: number;
+  managerCount: number;
+  hasMore: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -444,10 +449,11 @@ export interface ApiErrorBody {
 export interface LoginRequest {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface ChangePasswordRequest {
-  currentPassword: string;
+  currentPassword?: string;
   newPassword: string;
 }
 

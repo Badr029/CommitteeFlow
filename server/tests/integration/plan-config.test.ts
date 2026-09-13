@@ -560,6 +560,13 @@ describe('plan configuration', () => {
       expect(res.body.entries[2].oldValue.label).toBe('Status');
       expect(res.body.entries[2].newValue.label).toBe('Progress');
       expect(res.body.entries[0].changedBy.id).toBe(user.id);
+      expect(res.body.total).toBe(3);
+
+      const secondPage = await session.get('/api/plan-fields/history?page=2&limit=2');
+      expect(secondPage.status).toBe(200);
+      expect(secondPage.body).toMatchObject({ page: 2, limit: 2, total: 3, hasMore: false });
+      expect(secondPage.body.entries).toHaveLength(1);
+      expect(secondPage.body.entries[0].action).toBe('UPDATE');
     });
 
     it('keeps the configuration history behind the same permission', async () => {

@@ -27,9 +27,14 @@ describe('Plan Configuration — renaming a field', () => {
     const fields = defaultPlanFields();
     api
       .on('GET', '/api/auth/session', { body: session('PROJECT_ENGINEER', true) })
+      .on('GET', '/api/plan-fields/history?page=1&limit=25', {
+        body: { entries: [], page: 1, limit: 25, total: 0, hasMore: false },
+      })
       .on('GET', '/api/plan-fields', { body: { fields } })
       .on('GET', '/api/settings', { body: session('PROJECT_ENGINEER', true).settings })
-      .on('GET', '/api/plan-fields/history?limit=50', { body: { entries: [], hasMore: false } });
+      .on('GET', '/api/users?page=1&limit=25', {
+        body: { users: [], page: 1, limit: 25, total: 0, managerCount: 0, hasMore: false },
+      });
     api.install();
     return fields;
   }

@@ -261,6 +261,33 @@
 .historyWhat { color: var(--ink-secondary); }
 .historyWho { font-weight: 600; }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  min-height: var(--control-height);
+}
+
+.paginationSummary,
+.paginationPage {
+  color: var(--ink-muted);
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.paginationActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.paginationPage {
+  min-width: 94px;
+  text-align: center;
+}
+
 .diff { color: var(--ink-secondary); }
 .diffFrom { color: var(--ink-muted); text-decoration: line-through; text-decoration-thickness: 1px; }
 .diffTo { color: var(--ink); font-weight: 500; }
@@ -460,4 +487,13 @@
   .accessRow > :nth-child(2) { justify-self: start; }
   .accessWho .fieldKey { padding-left: 0; }
   .accessRow .toggleCell { justify-content: flex-end; min-height: var(--tap-comfortable); }
+
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .paginationActions { justify-content: space-between; }
+  .paginationActions button { min-height: var(--control-height-touch); }
 }

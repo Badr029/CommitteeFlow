@@ -30,6 +30,7 @@ import { Pill } from '@/components/ui/Pill';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AddFieldDrawer } from './AddFieldDrawer';
 import { PlanAccessPanel } from './PlanAccessPanel';
+import { PaginationControls } from './PaginationControls';
 import { SettingsPanel } from './SettingsPanel';
 import styles from './PlanConfigPage.module.css';
 
@@ -57,7 +58,8 @@ export function PlanConfigPage() {
   const reorder = useReorderPlanFields();
   const archive = useArchivePlanField();
   const restore = useRestorePlanField();
-  const history = useConfigurationHistory(true);
+  const [historyPage, setHistoryPage] = useState(1);
+  const history = useConfigurationHistory(true, historyPage);
 
   const [adding, setAdding] = useState(false);
   const [pendingArchive, setPendingArchive] = useState<PlanField | null>(null);
@@ -205,6 +207,16 @@ export function PlanConfigPage() {
               entries={history.data?.entries}
               loading={history.isPending}
             />
+            {history.data && (
+              <PaginationControls
+                page={historyPage}
+                pageSize={history.data.limit}
+                total={history.data.total}
+                loading={history.isFetching}
+                itemLabel="configuration history entries"
+                onPageChange={setHistoryPage}
+              />
+            )}
           </section>
         </div>
       </div>

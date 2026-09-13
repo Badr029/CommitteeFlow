@@ -180,6 +180,7 @@ Every value is **backend-only**. Nothing here is compiled into the React bundle
 | `SESSION_SECRET` | — | **Required**, ≥16 characters. |
 | `SESSION_NAME` | `committeeflow.sid` | |
 | `SESSION_TTL_HOURS` | `12` | Rolling — activity extends the session. |
+| `REMEMBER_ME_TTL_DAYS` | `30` | Rolling lifetime when the user selects **Keep me signed in**. |
 | `COOKIE_SECURE` | `false` | **Set `true` behind HTTPS.** |
 | `COOKIE_SAMESITE` | `lax` | |
 | `TRUST_PROXY` | `0` | Number of proxy hops to trust. `1` behind nginx. |

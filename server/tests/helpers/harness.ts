@@ -178,10 +178,14 @@ export class Session {
     return this;
   }
 
-  async login(email: string, password = TEST_PASSWORD): Promise<request.Response> {
+  async login(
+    email: string,
+    password = TEST_PASSWORD,
+    rememberMe = false,
+  ): Promise<request.Response> {
     if (!this.csrfToken) await this.bootstrap();
     const res = await this.apply(
-      request(this.application).post('/api/auth/login').send({ email, password }),
+      request(this.application).post('/api/auth/login').send({ email, password, rememberMe }),
       true,
     );
     this.absorb(res);

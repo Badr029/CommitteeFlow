@@ -439,6 +439,11 @@ export function PlanPage() {
               }
               onChange={(value) => setParam('engineer', value)}
             />
+              {currentMonth && (
+                <Button className={styles.toggleFilter} onClick={() => setParam('past', showPastDays ? null : '1')}>
+                  {showPastDays ? 'Hide past days' : 'Show past days'}
+                </Button>
+              )}
 
             {/* "My bookings" is a filter, not a page (spec §7). */}
             <label className={styles.toggleFilter} data-on={onlyMine}>
@@ -450,11 +455,6 @@ export function PlanPage() {
               Only my bookings
             </label>
 
-            {currentMonth && (
-              <Button variant="secondary" onClick={() => setParam('past', showPastDays ? null : '1')}>
-                {showPastDays ? 'Hide past days' : 'Show past days'}
-              </Button>
-            )}
 
             <label className={styles.toggleFilter} data-on={!includeCancelled}>
               <input

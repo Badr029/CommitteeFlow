@@ -4,6 +4,10 @@ Date: 2026-09-13
 Database: local disposable PostgreSQL 17 test database
 External systems changed: none
 
+This file records the local verification phase. A later deployed functional
+retest passed by product-owner review; see `../../BUG-017-Retest.md`. Its raw
+after exports and exact timings are not present in this checkout.
+
 ## Test-first reproduction
 
 `BUG-017-before-test.txt` preserves the failing pre-fix fairness test. Expected

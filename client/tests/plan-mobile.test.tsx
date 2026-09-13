@@ -290,6 +290,20 @@ describe('Committee Plan on a phone', () => {
       expect(within(nav).queryByRole('link', { name: /Config/ })).not.toBeInTheDocument();
       expect(within(nav).queryByText(/Config/)).not.toBeInTheDocument();
     });
+
+    it('keeps the theme switch outside the account menu', async () => {
+      api.on('GET', '/api/auth/session', { body: session('PROJECT_ENGINEER', true) });
+      api.install();
+      const user = userEvent.setup();
+      shell(true);
+
+      expect(screen.getByRole('button', { name: 'Switch to dark mode' })).toBeVisible();
+      await user.click(screen.getByRole('button', { name: /^Account:/ }));
+
+      const menu = screen.getByRole('menu');
+      expect(within(menu).queryByRole('menuitem', { name: /mode/i })).not.toBeInTheDocument();
+      expect(within(menu).getByRole('menuitem', { name: 'Change password' })).toBeVisible();
+    });
   });
 });
 

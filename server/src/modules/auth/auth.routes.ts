@@ -11,15 +11,22 @@ import { loginRateLimiter } from '../../middleware/rate-limit.js';
 import { getSettings } from '../plan-config/settings.service.js';
 import * as usersRepository from '../users/users.repository.js';
 import { fakeVerify, hashPassword, passwordPolicyIssues, verifyPassword } from './password.js';
-import { destroySession, generateCsrfToken, regenerateSession, saveSession } from './session.js';
+import {
+  applySessionPersistence,
+  destroySession,
+  generateCsrfToken,
+  regenerateSession,
+  saveSession,
+} from './session.js';
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, 'Enter your email address.').max(320),
   password: z.string().min(1, 'Enter your password.').max(256),
+  rememberMe: z.boolean().default(false),
 });
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Enter your current password.').max(256),
+  currentPassword: z.string().max(256).optional(),
   newPassword: z.string().min(1, 'Enter a new password.').max(256),
 });
 
@@ -41,7 +48,7 @@ export function authRouter(): Router {
     '/login',
     loginRateLimiter(),
     asyncHandler(async (req, res) => {
-      const { email, password } = parseBody(loginSchema, req.body);
+      const { email, password, rememberMe } = parseBody(loginSchema, req.body);
       const genericFailure = unauthenticated('That email or password is not correct.');
 
       const user = await usersRepository.findByEmail(email);
@@ -77,9 +84,10 @@ export function authRouter(): Router {
       req.session.role = user.role;
       req.session.loggedInAt = new Date().toISOString();
       req.session.csrfToken ??= generateCsrfToken();
+      applySessionPersistence(req.session, rememberMe);
       await saveSession(req);
 
-      issueCsrfCookie(res, req.session.csrfToken);
+      issueCsrfCookie(res, req.session.csrfToken, rememberMe);
       await usersRepository.recordSuccessfulLogin(user.id);
       logger.info({ userId: user.id, role: user.role }, 'login succeeded');
 
@@ -104,7 +112,7 @@ export function authRouter(): Router {
     asyncHandler(async (req, res) => {
       const user = req.user!;
       req.session.csrfToken ??= generateCsrfToken();
-      issueCsrfCookie(res, req.session.csrfToken);
+      issueCsrfCookie(res, req.session.csrfToken, req.session.rememberMe);
 
       const body: SessionResponse = {
         user: toCurrentUser(user),
@@ -121,10 +129,18 @@ export function authRouter(): Router {
     asyncHandler(async (req, res) => {
       const input: ChangePasswordRequest = parseBody(changePasswordSchema, req.body);
       const user = req.user!;
-      const valid = user.passwordHash && await verifyPassword(user.passwordHash, input.currentPassword);
-      if (!valid) {
+      const mustVerifyCurrent = !user.mustChangePassword;
+      const validCurrent = input.currentPassword
+        ? user.passwordHash && await verifyPassword(user.passwordHash, input.currentPassword)
+        : false;
+      if (mustVerifyCurrent && !validCurrent) {
         throw validationFailed(
-          [{ field: 'currentPassword', message: 'Your current password is not correct.' }],
+          [{
+            field: 'currentPassword',
+            message: input.currentPassword
+              ? 'Your current password is not correct.'
+              : 'Enter your current password.',
+          }],
           'Check your current password.',
         );
       }
@@ -153,7 +169,7 @@ export function authRouter(): Router {
       req.session.loggedInAt = new Date().toISOString();
       req.session.csrfToken = generateCsrfToken();
       await saveSession(req);
-      issueCsrfCookie(res, req.session.csrfToken);
+      issueCsrfCookie(res, req.session.csrfToken, req.session.rememberMe);
 
       logger.info({ userId: refreshed.id }, 'password changed');
       const body: SessionResponse = {

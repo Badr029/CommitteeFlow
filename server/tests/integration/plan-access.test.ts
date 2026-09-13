@@ -33,15 +33,22 @@ describe('plan configuration access', () => {
     it('lists active accounts, plan managers first', async () => {
       const { session } = await manager();
       await createUser({ role: 'VIEWER', name: 'Aaa Viewer' });
+      await createUser({ role: 'VIEWER', name: 'Bbb Viewer' });
       await createUser({ role: 'PROJECT_ENGINEER', name: 'Zzz Gone', isActive: false });
 
-      const res = await session.get('/api/users');
+      const res = await session.get('/api/users?page=1&limit=2');
       expect(res.status).toBe(200);
 
       const users = res.body.users as PlanAccessUser[];
       expect(users.map((user) => user.name)).not.toContain('Zzz Gone');
       expect(users[0]?.canManagePlanConfiguration).toBe(true);
       expect(users.every((user) => !('passwordHash' in user))).toBe(true);
+      expect(res.body).toMatchObject({ page: 1, limit: 2, total: 3, managerCount: 1, hasMore: true });
+
+      const next = await session.get('/api/users?page=2&limit=2');
+      expect(next.status).toBe(200);
+      expect(next.body).toMatchObject({ page: 2, limit: 2, total: 3, managerCount: 1, hasMore: false });
+      expect(next.body.users.map((user: PlanAccessUser) => user.name)).toEqual(['Bbb Viewer']);
     });
   });
 

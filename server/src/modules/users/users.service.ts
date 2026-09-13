@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { PlanAccessUser } from '@shared/api-types.js';
+import type { PlanAccessResponse, PlanAccessUser } from '@shared/api-types.js';
 import { conflict, forbidden, notFound } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 import { recordConfigurationChange } from '../audit/configuration-history.repository.js';
@@ -21,8 +21,14 @@ export const planAccessSchema = z.object({
   canManagePlanConfiguration: z.boolean(),
 });
 
-export async function listAccounts(): Promise<PlanAccessUser[]> {
-  return repository.listAccountsForAccess();
+export async function listAccounts(page: number, limit: number): Promise<PlanAccessResponse> {
+  const offset = (page - 1) * limit;
+  const [users, total, managerCount] = await Promise.all([
+    repository.listAccountsForAccess(limit, offset),
+    repository.countActiveUsers(),
+    repository.countPlanManagers(),
+  ]);
+  return { users, page, limit, total, managerCount, hasMore: offset + users.length < total };
 }
 
 export async function setPlanAccess(

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { toast } from 'sonner';
 import type { PlanAccessUser } from '@shared/api-types';
 import { ApiError } from '@/api/client';
 import { usePlanAccess, useSession, useSetPlanAccess } from '@/api/queries';
 import { Pill } from '@/components/ui/Pill';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PaginationControls } from './PaginationControls';
 import styles from './PlanConfigPage.module.css';
 
 /**
@@ -15,12 +17,13 @@ import styles from './PlanConfigPage.module.css';
  * change passwords — see `docs/managing-users.md`.
  */
 export function PlanAccessPanel() {
+  const [page, setPage] = useState(1);
   const session = useSession();
-  const accounts = usePlanAccess();
+  const accounts = usePlanAccess(page);
   const setAccess = useSetPlanAccess();
 
   const me = session.data?.user.id;
-  const managers = (accounts.data ?? []).filter((user) => user.canManagePlanConfiguration).length;
+  const managers = accounts.data?.managerCount ?? 0;
 
   const change = (user: PlanAccessUser, canManage: boolean) => {
     setAccess.mutate(
@@ -45,7 +48,7 @@ export function PlanAccessPanel() {
       <div className={styles.sectionHead}>
         <h2 className={styles.sectionTitle}>Who can configure the plan</h2>
         <span className={styles.sectionNote}>
-          {managers === 0 ? 'Everyone with an account' : `${managers} of ${accounts.data?.length ?? 0} accounts`}
+          {`${managers.toLocaleString()} of ${(accounts.data?.total ?? 0).toLocaleString()} accounts`}
         </span>
       </div>
 
@@ -62,8 +65,8 @@ export function PlanAccessPanel() {
       ) : accounts.isError || !accounts.data ? (
         <p className={styles.settingNote}>The list of accounts could not be loaded.</p>
       ) : (
-        <div className={styles.accessList}>
-          {accounts.data.map((user) => {
+        <div className={styles.accessList} aria-busy={accounts.isFetching}>
+          {accounts.data.users.map((user) => {
             /*
              * Both guards are enforced on the server; disabling the control here
              * only saves someone the round trip to an error they cannot act on.
@@ -100,6 +103,17 @@ export function PlanAccessPanel() {
             );
           })}
         </div>
+      )}
+
+      {accounts.data && (
+        <PaginationControls
+          page={page}
+          pageSize={accounts.data.limit}
+          total={accounts.data.total}
+          loading={accounts.isFetching}
+          itemLabel="accounts"
+          onPageChange={setPage}
+        />
       )}
 
       <p className={styles.settingNote}>

@@ -4,7 +4,10 @@ import type { AppSettings, PlanFieldsResponse } from '@shared/api-types.js';
 import { asyncHandler, parseBody, parseQuery, parseUuidParam } from '../../lib/http.js';
 import { currentUser, requireAuth, requirePlanManager } from '../../middleware/authenticate.js';
 import { writeRateLimiter } from '../../middleware/rate-limit.js';
-import { listConfigurationHistory } from '../audit/configuration-history.repository.js';
+import {
+  countConfigurationHistory,
+  listConfigurationHistory,
+} from '../audit/configuration-history.repository.js';
 import * as service from './plan-fields.service.js';
 import { getSettings, settingsUpdateSchema, updateSettings } from './settings.service.js';
 
@@ -97,12 +100,17 @@ export function planFieldsRouter(): Router {
     requirePlanManager,
     asyncHandler(async (req, res) => {
       const { page, limit } = parseQuery(historyQuerySchema, req.query);
-      const entries = await listConfigurationHistory(limit + 1, (page - 1) * limit);
+      const offset = (page - 1) * limit;
+      const [entries, total] = await Promise.all([
+        listConfigurationHistory(limit, offset),
+        countConfigurationHistory(),
+      ]);
       res.json({
-        entries: entries.slice(0, limit),
+        entries,
         page,
         limit,
-        hasMore: entries.length > limit,
+        total,
+        hasMore: offset + entries.length < total,
       });
     }),
   );

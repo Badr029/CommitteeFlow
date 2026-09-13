@@ -1,21 +1,22 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
-import { CalendarRange, History, Settings2 } from 'lucide-react';
+import { CalendarRange, History, Moon, Settings2, Sun } from 'lucide-react';
 import type { SessionResponse } from '@shared/api-types';
 import { cn } from '@/lib/cn';
 import type { Theme } from '@/lib/theme';
 import { useViewport } from '@/lib/viewport';
 import { AccountMenu } from './AccountMenu';
 import { MobileTabBar } from './MobileTabBar';
+import { Button } from './ui/Button';
 import styles from './AppShell.module.css';
 
 /**
  * The frame every signed-in screen sits in.
  *
  * Three destinations, one identity, one theme switch — the same architecture at
- * every size, in two shapes. Wide screens get a single top bar. A phone splits
- * it: identity and theme move behind an account control, and the destinations
- * drop to a bottom bar within thumb reach.
+ * every size, in two shapes. Wide screens get a single top bar. A phone keeps
+ * the theme and identity controls visible while the destinations drop to a
+ * bottom bar within thumb reach.
  *
  * Plan Configuration only appears for someone who holds the permission, and the
  * server enforces the same rule independently, so hiding it is convenience,
@@ -84,7 +85,10 @@ function MobileBar({
 
       <div className={styles.spacer} />
 
-      <AccountMenu session={session} theme={theme} onToggleTheme={onToggleTheme} onChangePassword={onChangePassword} />
+      <div className={styles.barRight}>
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} mobile />
+        <AccountMenu session={session} onChangePassword={onChangePassword} />
+      </div>
     </header>
   );
 }
@@ -129,10 +133,34 @@ function DesktopBar({
       <div className={styles.spacer} />
 
       <div className={styles.barRight}>
-        <AccountMenu session={session} theme={theme} onToggleTheme={onToggleTheme}
-          onChangePassword={onChangePassword} desktop />
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <AccountMenu session={session} onChangePassword={onChangePassword} desktop />
       </div>
     </header>
+  );
+}
+
+function ThemeToggle({
+  theme,
+  onToggle,
+  mobile = false,
+}: {
+  theme: Theme;
+  onToggle: () => void;
+  mobile?: boolean;
+}) {
+  const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+
+  return (
+    <Button
+      variant="ghost"
+      iconOnly
+      icon={theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+      className={mobile ? styles.themeToggleMobile : styles.themeToggle}
+      onClick={onToggle}
+      aria-label={label}
+      title={label}
+    />
   );
 }
 

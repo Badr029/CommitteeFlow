@@ -1,8 +1,8 @@
 # BUG-017 — outbox fairness and throughput retest
 
-Status: refined correction implemented and locally verified; deployment and
-realistic SMTP retest pending. No Vercel, Supabase, Cron, Pinggy, Mailpit, or
-production database state was changed.
+Status: refined correction implemented and locally verified. Deployed functional
+retest passed by product-owner review on 2026-09-13; raw closure exports and exact
+timing values are not present in this checkout.
 
 ## Evidence boundary
 
@@ -42,7 +42,10 @@ PostgreSQL safely treats it as a no-op when Supabase `net` and Vault are absent.
 | Tests | Fairness, ordering, concurrency bound, overlap, retry, duplicate protection |
 | Operations | Vault setup and 30-second Cron fallback documented |
 
-## Deployment sequence — not performed
+## Deployment sequence
+
+The checkout does not contain an execution log proving which of these operational
+steps were performed. Keep this as the deployment checklist, not as an audit log.
 
 1. Deploy the code and run both new migrations in order:
    `1700000000007_forced-password-change.sql`, then
@@ -95,8 +98,21 @@ authorization headers, or raw SMTP errors.
   latency class as the valid historical 2.49–2.60 second p95 baselines. This is
   a comparison guard, not a new SLA.
 
+## Reported deployed result
+
+- 9/9 parent rows reached `SENT`.
+- All 99 expected durable child batches completed.
+- No duplicate delivery was observed.
+- Same-booking CREATED → UPDATED → CANCELLED ordering remained intact.
+
+This satisfies the functional pass criteria. Preserve the report as
+user-attested until the final SQL export, redacted worker log, Mailpit export,
+deployed build ID and exact run timestamps are added. Historical JTLs and raw
+evidence remain unchanged.
+
 ## Still unverified
 
-Production deployment; Supabase Vault configuration; trigger-to-worker latency;
-actual Vercel duration; deployed SMTP duration; aggregate concurrency across
-Vercel instances; Pinggy contribution; and the clean end-to-end drain.
+Raw deployment/configuration exports; trigger-to-worker latency; actual Vercel
+duration; deployed SMTP duration; aggregate concurrency across Vercel instances;
+Pinggy contribution; exact run duration; and independent duplicate analysis from
+the missing after exports.
