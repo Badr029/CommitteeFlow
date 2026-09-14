@@ -24,7 +24,7 @@
  */
 import { hashPassword } from '../src/modules/auth/password.js';
 import { queryOne, queryRows, withTransaction } from '../src/db/index.js';
-import { closePool } from '../src/db/pool.js';
+import { closePool, getPool } from '../src/db/pool.js';
 import type { Queryable } from '../src/db/index.js';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -140,19 +140,43 @@ async function describeTarget(): Promise<void> {
    * Introspection is a convenience, not the job. A managed host that restricts
    * one of these views must not be able to stop the seed from running.
    */
-  let row: {
-    database: string; host: string | null; port: number | null; ssl: string; users: number;
-  } | undefined;
+  let encrypted: boolean | undefined;
+  let row: { database: string; backendSsl: string; users: number } | undefined;
+
   try {
-    row = await queryOne<{
-    database: string; host: string | null; port: number | null; ssl: string; users: number;
-  }>(
-    `SELECT current_database()                        AS database,
-            inet_server_addr()::text                  AS host,
-            inet_server_port()                        AS port,
-            coalesce((SELECT ssl::text FROM pg_stat_ssl WHERE pid = pg_backend_pid()), 'unknown') AS ssl,
-            (SELECT count(*)::int FROM users)         AS users`,
-    );
+    const client = await getPool().connect();
+    try {
+      /*
+       * Ask the socket, not the server.
+       *
+       * `pg_stat_ssl` describes the backend's own connection, and behind a
+       * connection pooler that is the pooler-to-PostgreSQL hop — not yours. It
+       * reports "off" on a perfectly encrypted client link, which is worse than
+       * saying nothing. The client stream knows what it actually negotiated.
+       */
+      const stream = (client as unknown as {
+        connection?: { stream?: { encrypted?: boolean; constructor?: { name?: string } } };
+      }).connection?.stream;
+      /*
+       * A plain net.Socket has no `encrypted` at all — it is undefined, not
+       * false — so "no flag" must not be read as "cannot tell". The stream's own
+       * type is the reliable signal: pg replaces the socket with a TLSSocket
+       * when it negotiates TLS.
+       */
+      encrypted = stream === undefined
+        ? undefined
+        : stream.encrypted === true || stream.constructor?.name === 'TLSSocket';
+
+      const result = await client.query<{ database: string; backendSsl: string; users: number }>(
+        `SELECT current_database() AS database,
+                coalesce((SELECT ssl::text FROM pg_stat_ssl WHERE pid = pg_backend_pid()), 'unknown')
+                  AS "backendSsl",
+                (SELECT count(*)::int FROM users) AS users`,
+      );
+      row = result.rows[0];
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.log(`Target
   host       ${hostFromUrl}`);
@@ -161,11 +185,18 @@ async function describeTarget(): Promise<void> {
     return;
   }
 
+  const tls = encrypted === undefined ? 'unknown' : encrypted ? 'on' : 'OFF — sent in the clear';
+
   console.log('Target');
   console.log(`  host       ${hostFromUrl}`);
   console.log(`  database   ${row?.database ?? '?'}`);
-  console.log(`  tls        ${row?.ssl === 'true' ? 'on' : row?.ssl ?? 'unknown'}`);
-  console.log(`  users      ${row?.users ?? '?'} already there\n`);
+  console.log(`  tls        ${tls}`);
+  if (encrypted && row?.backendSsl === 'false') {
+    console.log('             (the server reports its own hop as unencrypted, which is normal');
+    console.log('              behind a pooler — your connection to the pooler is encrypted)');
+  }
+  console.log(`  users      ${row?.users ?? 0} already there
+`);
 }
 
 
@@ -451,7 +482,29 @@ function explain(error: unknown): string {
     .filter((part) => part !== undefined && part !== '');
   const line = parts.length ? parts.join(' ') : 'the database refused the connection';
 
-  const connectionish = /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|SSL|certificate|terminated/i.test(line)
+  /*
+   * node-postgres reads `sslmode=require` as verify-full, so a managed host
+   * whose chain is not in Node's trust store fails here rather than at connect
+   * time. The fix is not to turn TLS off — it is to ask for libpq's meaning of
+   * "require", which encrypts without demanding a verifiable chain.
+   */
+  if (/self-signed|SELF_SIGNED|unable to verify|certificate/i.test(line)) {
+    return `${line}
+
+TLS reached the server; the certificate chain did not verify. Either ask for
+libpq's meaning of sslmode=require, which encrypts without verifying the chain:
+
+    ...pooler.supabase.com:5432/postgres?uselibpqcompat=true&sslmode=require
+
+or verify properly against the provider's CA, downloaded from its dashboard:
+
+    ...?sslmode=verify-full&sslrootcert=C:\path\to\prod-ca-2021.crt
+
+Do not answer this by removing sslmode. That falls back to PGSSLMODE, and the
+development .env sets it to disable — which sends the password in the clear.`;
+  }
+
+  const connectionish = /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|terminated/i.test(line)
     || parts.length === 0;
   if (!connectionish) return line;
 
