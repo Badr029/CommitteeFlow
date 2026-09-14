@@ -22,6 +22,7 @@
  *
  * Every name, customer, transformer and order number below is invented.
  */
+import { randomBytes } from 'node:crypto';
 import { hashPassword } from '../src/modules/auth/password.js';
 import { queryOne, queryRows, withTransaction } from '../src/db/index.js';
 import { closePool, getPool } from '../src/db/pool.js';
@@ -233,7 +234,16 @@ async function upsertUser(
             password?: string; canManagePlanConfiguration?: boolean },
   tx: Queryable,
 ): Promise<string> {
-  const hash = person.password ? await hashPassword(person.password) : null;
+  /*
+   * Every account must be able to authenticate — `users_authenticatable` requires
+   * a password hash or an external identity, and there is no third option.
+   *
+   * The colleague exists so that ownership on the plan is visibly not uniform,
+   * not so anyone can sign in as him. He therefore gets a password nobody knows:
+   * random bytes, hashed, printed nowhere and thrown away with this process.
+   */
+  const secret = person.password ?? randomBytes(32).toString('base64url');
+  const hash = await hashPassword(secret);
 
   const existing = await queryOne<{ id: string }>(
     'SELECT id FROM users WHERE lower(email) = lower($1)',

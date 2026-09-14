@@ -42,7 +42,10 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
 /**
  * Whether this build is the public demo.
  *
- * Vite inlines `import.meta.env` at build time, so an installation built without
- * the flag does not ship the addresses at all — they are not merely hidden.
+ * Read with dot notation deliberately. Vite replaces
+ * `import.meta.env.VITE_DEMO_ACCOUNTS` with a literal at build time, so this
+ * whole constant folds to `false` in an ordinary build and the bundler drops the
+ * panel — and these addresses with it. Bracket notation would survive as a
+ * runtime lookup and ship the credentials to every installation.
  */
-export const isDemoBuild = import.meta.env['VITE_DEMO_ACCOUNTS'] === 'true';
+export const isDemoBuild = import.meta.env.VITE_DEMO_ACCOUNTS === 'true';

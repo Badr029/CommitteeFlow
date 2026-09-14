@@ -11,6 +11,7 @@
  *
  *   npm run users -- list
  *   npm run users -- add "Ahmed Fathy" ahmed@example.com --engineer --can-configure
+ *   npm run users -- add "Demo" demo@example.com --engineer --shared
  *   npm run users -- password ahmed@example.com
  *   npm run users -- role ahmed@example.com viewer
  *   npm run users -- configure ahmed@example.com on
@@ -71,6 +72,8 @@ function usage(): void {
       --engineer                    can create and edit bookings (default: viewer)
       --can-configure               can change Plan Configuration
       --no-email                    opt out of booking notifications
+      --shared                      a demo sign-in: password is not temporary,
+                                    and it receives no notifications
   password <email>                  set a new password
   role <email> engineer|viewer      change what they can do with bookings
   configure <email> on|off          grant or revoke Plan Configuration
@@ -131,6 +134,17 @@ async function add(args: string[]): Promise<void> {
     process.exit(1);
   }
 
+  /*
+   * A shared account cannot be asked to rotate its password.
+   *
+   * Every account created here is handed a temporary password and told to
+   * replace it, which is right for a person. A demo sign-in published on a
+   * website is not a person: the first thing a visitor would meet is a dialog
+   * they cannot dismiss, on an account they do not own, and the password they
+   * were given would stop working for the next visitor.
+   */
+  const shared = flags.includes('--shared');
+
   const password = await readPassword();
   const user = await users.createUser({
     name,
@@ -138,13 +152,17 @@ async function add(args: string[]): Promise<void> {
     passwordHash: await hashPassword(password),
     role: flags.includes('--engineer') ? 'PROJECT_ENGINEER' : 'VIEWER',
     canManagePlanConfiguration: flags.includes('--can-configure'),
-    notifyByEmail: !flags.includes('--no-email'),
-    mustChangePassword: true,
+    notifyByEmail: !flags.includes('--no-email') && !shared,
+    mustChangePassword: !shared,
   });
 
   const extra = user.canManagePlanConfiguration ? ', can configure the plan' : '';
   console.log(`Created ${user.email} — ${user.role}${extra}.`);
-  console.log('They must replace this temporary password at first sign-in.');
+  console.log(
+    shared
+      ? 'Shared account: the password stays as set, and it receives no notifications.'
+      : 'They must replace this temporary password at first sign-in.',
+  );
 }
 
 async function setPassword(email: string): Promise<void> {
