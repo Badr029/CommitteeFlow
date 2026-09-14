@@ -11,6 +11,7 @@ import { Field } from '@/components/ui/Field';
 import { controlClass } from '@/components/ui/classes';
 import { cn } from '@/lib/cn';
 import styles from './LoginPage.module.css';
+import { DEMO_ACCOUNTS, isDemoBuild, type DemoAccount } from './demo-accounts';
 import { returnToFromState } from './returnTo';
 
 /**
@@ -77,6 +78,18 @@ export function LoginPage({
         },
       },
     );
+  };
+
+  /*
+   * Fills the fields rather than signing in. A visitor who lands on a plan
+   * without having seen the credentials cannot tell which account they are in,
+   * and a demo where you press Sign in yourself is one you can also repeat.
+   */
+  const fillWithDemoAccount = (account: DemoAccount) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setMissing(null);
+    login.reset();
   };
 
   const serverError = login.error instanceof ApiError ? login.error : null;
@@ -180,11 +193,36 @@ export function LoginPage({
               Sign in
             </Button>
           </form>
+
+          {isDemoBuild && (
+            <div className={styles.demo}>
+              <p className={styles.demoLead}>
+                <strong>This is a live demo.</strong> Pick an account to fill the form, then sign
+                in. The plan and everyone in it are invented.
+              </p>
+              <div className={styles.demoGrid}>
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    className={styles.demoButton}
+                    onClick={() => fillWithDemoAccount(account)}
+                  >
+                    <span className={styles.demoRole}>{account.label}</span>
+                    <span className={styles.demoCan}>{account.can}</span>
+                    <span className={styles.demoEmail}>{account.email}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <footer className={styles.foot}>
-        Replaces the monthly Committee Plan spreadsheet. Ask your plan administrator for access.
+        {isDemoBuild
+          ? 'Replaces the monthly Committee Plan spreadsheet. This deployment is a public demo — nothing in it is real.'
+          : 'Replaces the monthly Committee Plan spreadsheet. Ask your plan administrator for access.'}
       </footer>
     </div>
   );
