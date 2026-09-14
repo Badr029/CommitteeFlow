@@ -1,6 +1,0 @@
-{
-  "preFix": {
-    "reason": "KV stores a number, but this column holds values like “11/0.",
-    "showsRatios": true
-  }
-}

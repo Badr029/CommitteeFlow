@@ -27,5 +27,6 @@ client/src/**/*.js
 client/src/**/*.js.map
 
 # QA evidence tooling — installed on demand, never shipped.
-qa/tools/node_modules/
-qa/tools/browsers/
+qa/
+
+docs/

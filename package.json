@@ -25,6 +25,7 @@
     "migrate:down": "npm run migrate:down --workspace server",
     "seed": "npm run seed --workspace server",
     "users": "npm run users --workspace server --",
+    "demo": "npm run demo --workspace server --",
     "db:up": "docker compose -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "test:server": "npm run test --workspace server"

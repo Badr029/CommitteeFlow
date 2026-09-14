@@ -1,4 +1,0 @@
-WARNING: Error loading config file: open C:\Users\pc\.docker\config.json: Access is denied.
-WARNING: Error loading config file: open C:\Users\pc\.docker\config.json: Access is denied.
-error while interpolating services.committee-app.environment.DATABASE_URL: required variable POSTGRES_PASSWORD is missing a value: set POSTGRES_PASSWORD in .env
-error while interpolating services.postgres.environment.POSTGRES_PASSWORD: required variable POSTGRES_PASSWORD is missing a value: set POSTGRES_PASSWORD in .env

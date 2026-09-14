@@ -1,3 +1,0 @@
-WARNING: Error loading config file: open C:\Users\pc\.docker\config.json: Access is denied.
-WARNING: Error loading config file: open C:\Users\pc\.docker\config.json: Access is denied.
-Compose validation exit code: 0; synthetic placeholders only; no containers started.

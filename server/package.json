@@ -19,6 +19,7 @@
     "migrate:down": "npm run migrate -- down",
     "seed": "tsx --env-file-if-exists=../.env src/db/seed.ts",
     "users": "tsx --env-file-if-exists=../.env scripts/users.ts",
+    "demo": "tsx --env-file-if-exists=../.env scripts/demo.ts",
     "fixture:rtl": "tsx scripts/rtl-fixture.ts"
   },
   "dependencies": {
